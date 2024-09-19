@@ -11,6 +11,10 @@
 		<meta charset="utf-8"/>
 		<style type="text/css">
 
+			body {
+				padding: 1em .5em;
+			}
+
 			fieldset {
 				border: solid 1px lightgrey;
 				border-radius: 3px;
@@ -23,26 +27,35 @@
 				color: grey;
 			}
 
-			fieldset > label,
-			fieldset > label + * {
+			form > fieldset > *:not(legend) {
 				display: block;
 				float: left;
 			}
 
-			fieldset > label {
+			form > fieldset > *:nth-child(even):not(legend) {
 				width: 30%;
 				text-align: right;
 				margin-right: 1%;
 			}
 
-			fieldset > label + * {
-				width: 60%;
+			form > fieldset > *:nth-child(odd) {
+				width: 65%;
 				clear: right;
 				margin-bottom: 1em;
 			}
 
-			fieldset > label + *:last-child {
+			form > fieldset > *:last-child {
 				margin-bottom: 0em;
+			}
+
+			fieldset.subset {
+				border-width: 0;
+				padding: 0;
+				margin: .4em 0 0;
+			}
+
+			fieldset.subset > *:nth-child(odd) {
+				margin-right: .4em;
 			}
 
 		</style>
@@ -90,8 +103,8 @@
 
 			<legend>Misc. Settings</legend>
 
-			<label for="display_data_url"><input type="checkbox" id="display_data_url"/></label>
-			<span>Display url where data is parsed from. Styled by Data Header (above).</span>
+			<span><input type="checkbox" id="display_data_url"/></span>
+			<label for="display_data_url">Display URL where data is parsed from as a console log entry.<br />Styled by Data Header (above).</label>
 
 			<span><input type="checkbox" id="inject_req_headers"/></span>
 			<span>
