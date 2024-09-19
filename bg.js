@@ -381,6 +381,12 @@ function logDataUrl( tabId, method, url, style, type ) {
 	}).then(data => tabFromId( tabId ).log( data ) );
 }
 
+/** Log a groupEnd message to the console to close out a data URL group. */
+function endDataUrlGroup(tabId) {
+	processChromeLoggerData({
+		rows: [["", "", "groupEnd"]]
+	}).then(data => tabFromId( tabId ).log( data ) );
+}
 
 /**
  * Tab.devPort runtime.Port.onMessage event handler.
@@ -419,7 +425,7 @@ function onDevPortMessage( details ) {
 
 		// display data url ? log it as chromelogger data ...
 		if ( opts.display_data_url )
-			logDataUrl(details.tabId, details.method, details.url, opts.console_substitution_styles.header, "log");
+			logDataUrl(details.tabId, details.method, details.url, opts.console_substitution_styles.header, opts.display_url_logtype);
 
 		// parse headers ...
 		headers.forEach(( header )=>{
@@ -429,6 +435,10 @@ function onDevPortMessage( details ) {
 			// ... and process as one log message (to be decoded together).
 			decodeAndProcessLoggerData(details.tabId, headerValues);
 		});
+
+		// display data url as group ? log the `groupEnd()` part ...
+		if ( opts.display_data_url && opts.display_url_logtype != "log" )
+			endDataUrlGroup(details.tabId);
 
 	});
 

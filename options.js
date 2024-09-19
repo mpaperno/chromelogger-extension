@@ -22,6 +22,8 @@ function populateForm( opts ) {
 
 	// misc. settings ...
 	document.querySelector('input#display_data_url').checked = opts.display_data_url;
+	document.querySelector("#display_url_logtype").value = opts.display_url_logtype;
+	document.querySelector("#display_url_options").disabled = !opts.display_data_url;
 	document.querySelector('input#inject_req_headers').checked = opts.inject_req_headers;
 	document.querySelector('input#inject_req_headers_for_types').value = opts.inject_req_headers_for_types.join(', ');
 	document.querySelector("#inject_req_headers_options").disabled = !opts.inject_req_headers;
@@ -34,6 +36,7 @@ document.addEventListener("DOMContentLoaded", event=>{
 	// style inputs ...
 	const console_substitution_style_inputs = document.querySelectorAll("form fieldset#console_substitution_styles input"),
 		// checkbox options
+		display_data_url_checkbox = document.querySelector("form input#display_data_url"),
 		inject_req_headers_checkbox = document.querySelector('form input#inject_req_headers');
 
 	// update label style on input update ...
@@ -47,6 +50,11 @@ document.addEventListener("DOMContentLoaded", event=>{
 	browser.storage.sync.get(DEFAULT_OPTIONS)
 	.then(populateForm)
 	.catch(error=>{ console.error(error); });
+
+	// set change handler on "display url" option to en/disable the "show as group" option accordingly
+	display_data_url_checkbox.addEventListener("change", () => {
+		document.querySelector("#display_url_options").disabled = !display_data_url_checkbox.checked;
+	});
 
 	// set change handler on "inject headers" option to en/disable the "request types" option accordingly
 	inject_req_headers_checkbox.addEventListener("change", () => {
@@ -86,9 +94,9 @@ document.addEventListener("DOMContentLoaded", event=>{
 
 				// styles ...
 				console_substitution_styles: console_substitution_styles,
-
-				// display url ...
-				display_data_url: document.querySelector("form input#display_data_url").checked,
+				// display url and log type (log|group|groupCollapsed) ...
+				display_data_url: display_data_url_checkbox.checked,
+				display_url_logtype: document.querySelector("#display_url_logtype").value,
 				// inject request headers and request types list
 				inject_req_headers: inject_req_headers_checkbox.checked,
 				inject_req_headers_for_types: document.querySelector('input#inject_req_headers_for_types').value.split(/\s*,\s*/),

@@ -104,7 +104,17 @@
 			<legend>Misc. Settings</legend>
 
 			<span><input type="checkbox" id="display_data_url"/></span>
-			<label for="display_data_url">Display URL where data is parsed from as a console log entry.<br />Styled by Data Header (above).</label>
+			<span>
+				<label for="display_data_url">Display URL where data is parsed from as a console log entry.<br />Styled by Data Header (above).</label>
+				<fieldset id="display_url_options" class="subset">
+					<label for="display_url_logtype">Log Data URL Header as:</label>
+					<select id="display_url_logtype">
+						<option value="log">Not grouped</option>
+						<option value="group">Group - expanded</option>
+						<option value="groupCollapsed">Group - collapsed</option>
+					</select>
+				</fieldset>
+			</span>
 
 			<span><input type="checkbox" id="inject_req_headers"/></span>
 			<span>
