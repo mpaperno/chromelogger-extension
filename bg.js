@@ -4,6 +4,9 @@
  * All the routine heavy lifting should be done here and the results coordinated betweent dev.js devtools script and log.js content script.
  */
 
+/** Array of response header(s) to process data from. */
+const PROCESS_REQUEST_HEADERS = [ 'x-chromelogger-data', 'x-chromephp-data'  ];
+
 /**
  * Collection of keyed tab objects connected when devtools are opened on a tab.
  * @since 1.0
@@ -334,6 +337,34 @@ function processChromeLoggerData( data ) {
 
 }
 
+/** Decodes and parses a b64-encoded log message,
+	hands it off to processChromeLoggerData() for processing/formatting,
+	then logs the result to the given tab.
+*/
+function decodeAndProcessLoggerData( tabId, logData ) {
+	try {
+		// base64 decode / parse JSON ...
+		const data = JSON.parse( atob( logData ) );
+
+		// process and log ...
+		processChromeLoggerData( data ).then(data=>{
+			tabFromId( tabId ).log( data );
+		});
+
+	} catch( error ) {
+		console.error(error);
+	}
+}
+
+/** Log the given method and URL to tab's dev console using the specified css style and log type ("log"/"group"/"groupCollapsed"/etc). */
+function logDataUrl( tabId, method, url, style, type ) {
+	processChromeLoggerData({
+		rows: [[
+			[ '%c%s %s', style, method, url ], "", type
+		]]
+	}).then(data => tabFromId( tabId ).log( data ) );
+}
+
 
 /**
  * Tab.devPort runtime.Port.onMessage event handler.
@@ -352,53 +383,38 @@ function processChromeLoggerData( data ) {
  */
 function onDevPortMessage( details ) {
 
-	// details object passed through the open devtools ...
-	if ( details.responseHeaders ) {
+	if (!details.responseHeaders)
+		return;
 
-		// headers to process data from ...
-		var headers = [ 'x-chromelogger-data', 'x-chromephp-data' ];
+	// details object passed through the open devtools ...
+
+	const headers = details.responseHeaders
+		// Just get the headers we're interested in...
+		.filter((h) => PROCESS_REQUEST_HEADERS.find( value => h.name.toLowerCase().startsWith(value)))
+		// ... and sort them by name in case of multiples with different suffixes (eg. X-ChromeLogger-Data-0001, -0002, etc)
+		.sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
+
+	// Bail out early if no headers to handle.
+	if (!headers.length)
+		return;
+
+	// load options, process header data ...
+	browser.storage.sync.get(DEFAULT_OPTIONS).then(opts=>{
+
+		// display data url ? log it as chromelogger data ...
+		if ( opts.display_data_url )
+			logDataUrl(details.tabId, details.method, details.url, opts.console_substitution_styles.header, "log");
 
 		// parse headers ...
-		details.responseHeaders.forEach(( header )=>{
-
-			// ChromeLogger data ! decode and process ...
-			if ( headers.includes( header.name.toLowerCase() ) ) {
-
-				// load options, process ...
-				browser.storage.sync.get(DEFAULT_OPTIONS).then(opts=>{
-
-					// display data url ? log it as chromelogger data ...
-					if ( opts.display_data_url ) processChromeLoggerData({
-						rows: [[[
-							'%c%s %s',
-							opts.console_substitution_styles.header,
-							details.method,
-							details.url
-						]]]
-					}).then(data=>{
-						tabFromId( details.tabId ).log( data );
-					});
-
-					// attempt to parse data from header ...
-					try {
-
-						// base64 decode / parse JSON ...
-						var data = JSON.parse( atob( header.value ) );
-
-						// process and log ...
-						processChromeLoggerData( data ).then(data=>{
-							tabFromId( details.tabId ).log( data );
-						});
-
-					} catch( error ) { console.error(error); }
-
-				});
-
-			}
-
+		headers.forEach(( header )=>{
+			// The `header.value` for all headers with the same name are joined together with commas into one string.
+			// For us, they're all parts of the same b64-encoded log message. Split them and re-join w/out the comma...
+			const headerValues = header.value.split(',').join('');
+			// ... and process as one log message (to be decoded together).
+			decodeAndProcessLoggerData(details.tabId, headerValues);
 		});
 
-	}
+	});
 
 }
 
