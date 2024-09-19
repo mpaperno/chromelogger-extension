@@ -4,6 +4,24 @@
  * @since 1.5
  */
 
+// message box singleton tracking
+var messageTimerId = null;
+
+/** Shows a temporary message in the settings form, eg. that the settings were saved. */
+function showMessage(message, status = "ok") {
+	var msg_el = document.getElementById("message_area");
+	msg_el.innerHTML = message;
+	msg_el.classList.add('visible');
+	msg_el.setAttribute('data-status', status);
+
+	if (messageTimerId !== null)
+		clearTimeout(messageTimerId);
+	messageTimerId = setTimeout(function() {
+		messageTimerId = null;
+		msg_el.classList.remove('visible');
+	}, 5000);
+}
+
 
 /**
  * Populate form from options.
@@ -73,8 +91,12 @@ document.addEventListener("DOMContentLoaded", event=>{
 			browser.storage.sync.set(DEFAULT_OPTIONS)
 			.then(()=>{
 				populateForm(DEFAULT_OPTIONS);
+				showMessage("Options reset to defaults.");
 			})
-			.catch(error=>{ console.error(error); });
+			.catch(error=>{
+				console.error(error);
+				showMessage("Error: " + error.message, "error");
+			});
 
 		}
 
@@ -102,7 +124,11 @@ document.addEventListener("DOMContentLoaded", event=>{
 				inject_req_headers_for_types: document.querySelector('input#inject_req_headers_for_types').value.split(/\s*,\s*/),
 
 			})
-			.catch(error=>{ console.error(error); });
+			.then(() => showMessage("Options saved!"))
+			.catch(error => {
+				console.error(error);
+				showMessage("Error: " + error.message, "error");
+			});
 
 		}
 

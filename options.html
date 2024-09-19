@@ -57,6 +57,31 @@
 				margin-right: .4em;
 			}
 
+			.buttonbox {
+				display: grid;
+				grid-template-columns: 1fr 1fr 2fr;
+				justify-items: center;
+				column-gap: 0em;
+			}
+
+			/* the message_area displays short status messages, like "settings saved" */
+			#message_area {
+				height: 2em;
+				justify-self: right;
+				padding-right: 1em;
+				font-size: 1.2em;
+				overflow: auto;
+				opacity: 0;
+				transition: opacity 1s;
+			}
+			#message_area.visible {
+				opacity: 1;
+			}
+			/* message colors by status type */
+			#message_area[data-status='ok']    { color: limegreen; }
+			#message_area[data-status='warn']  { color: orange; }
+			#message_area[data-status='error'] { color: red; }
+
 		</style>
 		<script type="text/javascript" src="global.js"></script>
 		<script type="text/javascript" src="options.js"></script>
@@ -128,9 +153,10 @@
 
 		</fieldset>
 
-		<section style="text-align:center;">
-			<button id="save">Save</button>
-			<button id="reset">Reset</button>
+		<section class="buttonbox">
+			<button id="reset">Reset to Defaults</button>
+			<button id="save">Save Options</button>
+			<div id="message_area"></div>  <!-- for dynamic status messages -->
 		</section>
 
 		</form>
