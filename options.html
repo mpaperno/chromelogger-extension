@@ -93,6 +93,17 @@
 			<label for="display_data_url"><input type="checkbox" id="display_data_url"/></label>
 			<span>Display url where data is parsed from. Styled by Data Header (above).</span>
 
+			<span><input type="checkbox" id="inject_req_headers"/></span>
+			<span>
+				<label for="inject_req_headers">Add '<i>X-ChromeLogger-Enabled</i>' and '<i>X-ChromeLogger-Version</i>' headers to requests when dev tools are active on a browser tab.</label>
+				<fieldset id="inject_req_headers_options" class="subset">
+					<label for="inject_req_headers_for_types">
+						Only for these <a href="https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest/ResourceType">request types</a> (separate values with commas):
+					</label><br />
+					<input id="inject_req_headers_for_types" type="text" style="width: 100%;" />
+				</fieldset>
+			</span>
+
 		</fieldset>
 
 		<section style="text-align:center;">

@@ -22,6 +22,9 @@ function populateForm( opts ) {
 
 	// misc. settings ...
 	document.querySelector('input#display_data_url').checked = opts.display_data_url;
+	document.querySelector('input#inject_req_headers').checked = opts.inject_req_headers;
+	document.querySelector('input#inject_req_headers_for_types').value = opts.inject_req_headers_for_types.join(', ');
+	document.querySelector("#inject_req_headers_options").disabled = !opts.inject_req_headers;
 
 }
 
@@ -29,7 +32,9 @@ function populateForm( opts ) {
 document.addEventListener("DOMContentLoaded", event=>{
 
 	// style inputs ...
-	let console_substitution_style_inputs = document.querySelectorAll("form fieldset#console_substitution_styles input");
+	const console_substitution_style_inputs = document.querySelectorAll("form fieldset#console_substitution_styles input"),
+		// checkbox options
+		inject_req_headers_checkbox = document.querySelector('form input#inject_req_headers');
 
 	// update label style on input update ...
 	console_substitution_style_inputs.forEach(input=>{
@@ -42,6 +47,11 @@ document.addEventListener("DOMContentLoaded", event=>{
 	browser.storage.sync.get(DEFAULT_OPTIONS)
 	.then(populateForm)
 	.catch(error=>{ console.error(error); });
+
+	// set change handler on "inject headers" option to en/disable the "request types" option accordingly
+	inject_req_headers_checkbox.addEventListener("change", () => {
+		document.querySelector("#inject_req_headers_options").disabled = !inject_req_headers_checkbox.checked;
+	});
 
 	// onsubmit ...
 	document.querySelector("form").addEventListener("submit", event=>{
@@ -79,6 +89,9 @@ document.addEventListener("DOMContentLoaded", event=>{
 
 				// display url ...
 				display_data_url: document.querySelector("form input#display_data_url").checked,
+				// inject request headers and request types list
+				inject_req_headers: inject_req_headers_checkbox.checked,
+				inject_req_headers_for_types: document.querySelector('input#inject_req_headers_for_types').value.split(/\s*,\s*/),
 
 			})
 			.catch(error=>{ console.error(error); });

@@ -109,6 +109,21 @@ class Tab {
 			tabs[ tabKeyFromId( details.tabId ) ].devPort.postMessage( details );
 		}
 
+		const version = browser.runtime.getManifest().version;  // cache for headers
+		/**
+			This event handler for `browser.webRequest.onBeforeSendHeaders` event injects X-ChromeLogger headers into the current request for this tab.
+			It does _not_ check the `inject_req_headers` setting -- disconnect the event handler to stop injecting headers instead.
+			@see toggleInjectRequestHeaders()
+		*/
+		this.onBeforeSendHeaders = function(details) {
+			details.requestHeaders.push(
+				{ name: "X-ChromeLogger-Enable", value: "1" },
+				{ name: "X-ChromeLogger-Version", value: version }
+			);
+			// console.log(details.requestHeaders);
+			return { requestHeaders: details.requestHeaders };
+		}
+
 	}
 
 
@@ -152,8 +167,9 @@ function onTabRemoved( tabId ) {
 		// disconnect ports ...
 		tab.devPort.disconnect();
 
-		// remove handler ...
+		// remove handlers ...
 		browser.webRequest.onHeadersReceived.removeListener( tab.onHeadersReceived );
+		toggleInjectRequestHeaders(tabKey, 2 /* force remove listener */);
 
 		// remove tab ...
 		delete tabs[ tabKey ];
@@ -437,6 +453,90 @@ function onDevPortDisconnect( port ) {
 
 
 /**
+	Adds/removes browser.webRequest.onBeforeSendHeaders event listener based on current user settings.
+	Used for optionally injecting X-ChromeLogger headers into a HTTP request.
+	@param { array | string } tabKeys The tab(s) to apply the changes to.
+	@param { enum | undefined } forceAction One of:
+		0 = Sub/unsub depending on user settings (default);
+		1 = Force re-subscribing event listeners with (presumably) new filter `types` setting;
+		2 = Force unsubscribe;
+*/
+function toggleInjectRequestHeaders(tabKeys, forceAction = 0) {
+
+	if (!Array.isArray(tabKeys))
+		tabKeys = [ tabKeys ];
+
+	// read current settings
+	browser.storage.sync.get({
+		inject_req_headers: DEFAULT_OPTIONS.inject_req_headers,
+		inject_req_headers_for_types: DEFAULT_OPTIONS.inject_req_headers_for_types,
+	}).then(opts => {
+
+		// loop over each tab whose listener we'll be updating
+		for (const tId of tabKeys) {
+			const tab = tabs[tId];
+			if (!tab || !tab.id)
+				continue;
+
+			// currently connected?
+			let isSubbed = browser.webRequest.onBeforeSendHeaders.hasListener( tab.onBeforeSendHeaders );
+
+			// need to disconnect listener if inject headers setting is false, if we're modifying the request type filter, or forcing unsub
+			if (isSubbed && (forceAction || !opts.inject_req_headers)) {
+				browser.webRequest.onBeforeSendHeaders.removeListener( tab.onBeforeSendHeaders );
+				isSubbed = false;
+			}
+
+			// (re)connect event handler if not already connected, setting is enabled, unsub is not forced, and list of request filters is valid
+			if (!isSubbed && opts.inject_req_headers && forceAction != 2 && Array.isArray(opts.inject_req_headers_for_types) && opts.inject_req_headers_for_types.length) {
+				browser.webRequest.onBeforeSendHeaders.addListener(
+					tab.onBeforeSendHeaders,
+					{
+						tabId: tab.id,
+						urls: [ "<all_urls>" ],
+						types: opts.inject_req_headers_for_types,
+					},
+					[ "blocking", "requestHeaders" ],
+				);
+			}
+		}
+
+	});
+}
+
+/**
+	Settings value change handler. Used to set up header injection features when settings are changed w/out re-starting the extension.
+*/
+function onStorageChanged(changes, area) {
+
+	// Check if we need to (re)connect/disconnect header injection events;
+	// Check that value actually did change since often they're in the changes list even if unchanged;
+	// If only the type of requests being handled is changing, we need to signal that to the toggleInjectRequestHeaders() handler.
+	let typeChange = false;
+	if (
+		(
+			Object.hasOwn(changes, 'inject_req_headers') &&
+			changes.inject_req_headers.oldValue != changes.inject_req_headers.newValue
+		) ||
+		( typeChange = (
+				Object.hasOwn(changes, 'inject_req_headers_for_types') &&
+				JSON.stringify(changes.inject_req_headers_for_types.oldValue) != JSON.stringify(changes.inject_req_headers_for_types.newValue)
+			)
+		)
+	) {
+		// toggleInjectRequestHeaders() will toggle event listeners on all active tabs and update the request types as well if needed,
+		// no need to call it twice even if both settings changed.
+		toggleInjectRequestHeaders(Object.keys(tabs), typeChange ? 1 : 0);
+	}
+
+}
+
+/**
+	Listener / Assigns onStorageChanged handler for extension settings change events.
+*/
+browser.storage.onChanged.addListener(onStorageChanged);
+
+/**
  * Listener / Assigns tab object and handlers connecting devtools context when devtools are opened on a tab.
  *
  * @since 1.0
@@ -471,6 +571,10 @@ browser.runtime.onConnect.addListener(( port ) => {
 			[ "responseHeaders" ]
 		);
 	}
+
+	// Make sure header injection is set up according to configuration.
+	// The function will check for existing listener mapping first.
+	toggleInjectRequestHeaders(tabKey);
 
 });
 
