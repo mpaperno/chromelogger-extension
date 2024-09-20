@@ -359,8 +359,12 @@ function processChromeLoggerData( data ) {
 */
 function decodeAndProcessLoggerData( tabId, logData ) {
 	try {
-		// base64 decode / parse JSON ...
-		const data = JSON.parse( atob( logData ) );
+		// base64 decode (utf-8 safe) / parse json ...
+		const data = JSON.parse(
+			new TextDecoder().decode(
+				Uint8Array.from( atob(logData), (m) => m.codePointAt(0) )
+			)
+		);
 
 		// process and log ...
 		processChromeLoggerData( data ).then(data=>{
