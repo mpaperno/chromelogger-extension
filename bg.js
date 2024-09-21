@@ -275,21 +275,31 @@ function processChromeLoggerData( data ) {
 						switch ( typeof arg ) {
 
 							case 'string':
-								tmpl_pattern.push('%c%s%c');
-								// unescape any passed substitution patterns ...
-								arg = arg.replace(/%{2,}(s|d|i|f|o|O|c|\.\d+(d|i|f))/g, '%$1');
-								tmpl_args.push(stringStyle, arg, '');
+								if (stringStyle) {
+									tmpl_pattern.push('%c%s%c');
+									// unescape any passed substitution patterns ...
+									arg = arg.replace(/%{2,}(s|d|i|f|o|O|c|\.\d+(d|i|f))/g, '%$1');
+									tmpl_args.push(stringStyle, arg, '');
+								}
+								else {
+									tmpl_pattern.push(arg);
+								}
 								break;
 
 							case 'number':
-								tmpl_pattern.push('%c%s%c');
-								tmpl_args.push(OPTIONS.console_substitution_styles.number, arg, '');
+								if (OPTIONS.console_substitution_styles.number) {
+									tmpl_pattern.push('%c%s%c');
+									tmpl_args.push(OPTIONS.console_substitution_styles.number, arg, '');
+								}
+								else {
+									tmpl_args.push(arg);
+								}
 								break;
 
 							case 'object':
 
 								// resolves to true (not null or undefined) and has special class name property ? prepend and remove ...
-								if ( arg && arg.hasOwnProperty('___class_name') ) {
+								if ( OPTIONS.console_substitution_styles.classname && arg && arg.hasOwnProperty('___class_name') ) {
 									tmpl_pattern.push('%c%s%c');
 									tmpl_args.push(OPTIONS.console_substitution_styles.classname, arg.___class_name, '');
 									delete arg.___class_name;
