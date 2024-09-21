@@ -13,7 +13,9 @@
 		<style type="text/css">
 
 			body {
-				padding: 1em .5em;
+				margin: 1em .5em;
+				/* This width fits in current Firefox settings window and forces Chrome's to be large enough, w/out scrolling. */
+				min-width: 600px;
 			}
 
 			fieldset {
@@ -83,6 +85,7 @@
 			#message_area[data-status='error'] { color: red; }
 
 		</style>
+		<script type="text/javascript" src="browser-polyfill.min.js"></script>
 		<script type="text/javascript" src="global.js"></script>
 		<script type="text/javascript" src="options.js"></script>
 	</head>

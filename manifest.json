@@ -7,7 +7,7 @@
 	"author": "Tarraccas Obremski",
 
 	"background": {
-		"scripts": [ "global.js", "bg.js" ]
+		"scripts": [ "browser-polyfill.min.js", "global.js", "bg.js" ]
 	},
 
 	"permissions": [
@@ -24,15 +24,15 @@
 
 	"devtools_page": "dev.html",
 
-	"applications": {
+	"browser_specific_settings": {
 		"gecko": {
 			"id": "chromelogger@burningmoth.com"
 		}
 	},
 
 	"icons": {
-		"48": "icon.svg",
-		"96": "icon.svg"
+		"48": "icon-48.png",
+		"96": "icon-96.png"
 	}
 
 }

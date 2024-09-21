@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", event=>{
 		event.preventDefault();
 
 		// reset ...
-		if ( event.explicitOriginalTarget.id == 'reset' ) {
+		if ( event.submitter.id == 'reset' ) {
 
 			// set from default options ? update form from default options ...
 			browser.storage.sync.set(DEFAULT_OPTIONS)

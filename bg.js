@@ -427,14 +427,23 @@ function onDevPortMessage( details ) {
 	if ( OPTIONS.display_data_url )
 		logDataUrl(details.tabId, details.method, details.url, OPTIONS.console_substitution_styles.header, OPTIONS.display_url_logtype);
 
-	// parse headers ...
-	headers.forEach(( header )=>{
-		// The `header.value` for all headers with the same name are joined together with commas into one string.
-		// For us, they're all parts of the same b64-encoded log message. Split them and re-join w/out the comma...
-		const headerValues = header.value.split(',').join('');
-		// ... and process as one log message (to be decoded together).
-		decodeAndProcessLoggerData(details.tabId, headerValues);
+	// In Chrome each header comes individually, even if they have the same names (in Firefox all values are joined together, see note below).
+	// For us, all headers with the same name are part of one B64-encoded message (log entry), so
+	// to join long log messages together we need to collect all values for the headers with same name.
+	// Use a Map because that preserves key insertion order.
+	const buffer = new Map();
+
+	// collect headers ...
+	headers.forEach(( header ) => {
+		let headerValue = buffer.get(header.name) || "";
+		// In Firefox (maybe others?) the `header.value` for all headers with the same name are joined
+		// together with commas into one string. Split them and re-join w/out the comma...
+		headerValue += header.value.split(',').join('');
+		buffer.set(header.name, headerValue);
 	});
+
+	// Now process the collected headers
+	buffer.forEach( (value) => decodeAndProcessLoggerData(details.tabId, value)	);
 
 	// display data url as group ? log the `groupEnd()` part ...
 	if ( OPTIONS.display_data_url && OPTIONS.display_url_logtype != "log" )
@@ -662,6 +671,8 @@ browser.webNavigation.onDOMContentLoaded.addListener(( details )=>{
 		&& details.frameId == 0 // main tab document ...
 	) {
 
+		// inject shim for Chrome compatibility (ignore errors for now)
+		browser.tabs.executeScript( details.tabId, { file: '/browser-polyfill.min.js' });
 		// inject log.js to receive messages sent to tab ? ...
 		browser.tabs.executeScript( details.tabId, { file: '/log.js' })
 		.then(()=>{
