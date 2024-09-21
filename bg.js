@@ -247,7 +247,7 @@ function processChromeLoggerData( data ) {
 			// process arguments ...
 			if (
 				args.length > 0
-				&& [ 'log', 'info', 'warn', 'error', 'group', 'groupCollapsed' ].includes(method)
+				&& [ 'log', 'debug', 'info', 'warn', 'error', 'group', 'groupCollapsed' ].includes(method)
 			) {
 
 				// detect, passthru an existing substitution pattern ...
