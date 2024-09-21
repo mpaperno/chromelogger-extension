@@ -6,6 +6,8 @@
 
 /** Array of response header(s) to process data from. */
 const PROCESS_REQUEST_HEADERS = [ 'x-chromelogger-data', 'x-chromephp-data'  ];
+/** Cached runtime option values to avoid repeated lookups. */
+const OPTIONS = structuredClone(DEFAULT_OPTIONS);
 
 /**
  * Collection of keyed tab objects connected when devtools are opened on a tab.
@@ -13,7 +15,6 @@ const PROCESS_REQUEST_HEADERS = [ 'x-chromelogger-data', 'x-chromephp-data'  ];
  * @var object tabs
  */
 var tabs = {};
-
 
 /**
  * Return tab id integer from port.name.
@@ -190,27 +191,26 @@ function processChromeLoggerData( data ) {
 
 	return new Promise( resolve => {
 
-		// load options, process data, pass to Tab.log() ...
-		browser.storage.sync.get(DEFAULT_OPTIONS).then(opts=>{
+		// process data, pass to Tab.log() ...
 
-			// ensure lowercase columns array ...
-			data.columns = (
-				! data.columns
-				|| ! Array.isArray(data.columns)
-				? [ 'log', 'backtrace', 'type' ]
-				: data.columns.map(column=>{ return column.toLowerCase(); })
-			);
+		// ensure lowercase columns array ...
+		data.columns = (
+			! data.columns
+			|| ! Array.isArray(data.columns)
+			? [ 'log', 'backtrace', 'type' ]
+			: data.columns.map(column=>{ return column.toLowerCase(); })
+		);
 
-			// map to rows array to console method args ...
-			data.args = data.rows.map(row=>{
+		// map to rows array to console method args ...
+		data.args = data.rows.map(row=>{
 
-				// convert row to object w/columns mapped to properties ...
-				row = row.reduce(function( row, value, index ){
-					row[ data.columns[ index ] ] = value;
-					return row;
-				}, { 'log': [], 'backtrace': false, 'type': 'log' });
+			// convert row to object w/columns mapped to properties ...
+			row = row.reduce(function( row, value, index ){
+				row[ data.columns[ index ] ] = value;
+				return row;
+			}, { 'log': [], 'backtrace': false, 'type': 'log' });
 
-				var
+			var
 
 				// console method / @see https://developer.mozilla.org/en-US/docs/Web/API/Console
 				method = row.type,
@@ -227,131 +227,126 @@ function processChromeLoggerData( data ) {
 				// substition arguments ...
 				tmpl_args = [];
 
-				// ensure method is valid ...
+			// ensure method is valid ...
+			if (
+				typeof method != 'string'
+				|| ! console[ method ]
+			) method = 'log';
+
+			// ensure arguments is array ...
+			if ( ! Array.isArray(args) ) args = [ args ];
+
+			// assertion ? ...
+			if ( method == 'assert' ) {
+				// resolves true ? log nothing ...
+				if ( args.shift() ) return false;
+				// false ! log error ...
+				else method = 'error';
+			}
+
+			// process arguments ...
+			if (
+				args.length > 0
+				&& [ 'log', 'info', 'warn', 'error', 'group', 'groupCollapsed' ].includes(method)
+			) {
+
+				// detect, passthru an existing substitution pattern ...
 				if (
-					typeof method != 'string'
-					|| ! console[ method ]
-				) method = 'log';
-
-				// ensure arguments is array ...
-				if ( ! Array.isArray(args) ) args = [ args ];
-
-				// assertion ? ...
-				if ( method == 'assert' ) {
-					// resolves true ? log nothing ...
-					if ( args.shift() ) return false;
-					// false ! log error ...
-					else method = 'error';
-				}
-
-				// process arguments ...
-				if (
-					args.length > 0
-					&& [ 'log', 'info', 'warn', 'error', 'group', 'groupCollapsed' ].includes(method)
+					typeof args[0] == 'string'
+					&& /(^|[^%])%(s|d|i|f|o|O|c|\.\d+(d|i|f))/.test(args[0])
 				) {
-
-					// detect, passthru an existing substitution pattern ...
-					if (
-						typeof args[0] == 'string'
-						&& /(^|[^%])%(s|d|i|f|o|O|c|\.\d+(d|i|f))/.test(args[0])
-					) {
-						tmpl_pattern = args.shift();
-						tmpl_args = args;
-					}
-
-					// generate pattern ...
-					else {
-
-						// make array ...
-						tmpl_pattern = [];
-
-						// populate pattern and args arrays ...
-						args.forEach(arg=>{
-
-							switch ( typeof arg ) {
-
-								case 'string':
-									tmpl_pattern.push('%c%s%c');
-									tmpl_args.push(
-										opts.console_substitution_styles[(
-											method == 'groupCollapsed'
-											? 'group'
-											: method
-										)],
-										// unescape any passed substitution patterns ...
-										arg.replace(/%{2,}(s|d|i|f|o|O|c|\.\d+(d|i|f))/g, '%$1'),
-										''
-									);
-									break;
-
-								case 'number':
-									tmpl_pattern.push('%c%s%c');
-									tmpl_args.push(opts.console_substitution_styles.number, arg, '');
-									break;
-
-								case 'object':
-
-									// resolves to true (not null or undefined) and has special class name property ? prepend and remove ...
-									if ( arg && arg.hasOwnProperty('___class_name') ) {
-										tmpl_pattern.push('%c%s%c');
-										tmpl_args.push(opts.console_substitution_styles.classname, arg.___class_name, '');
-										delete arg.___class_name;
-									}
-									// no break, passthru ...
-
-								default:
-									tmpl_pattern.push('%o');
-									tmpl_args.push(arg);
-									break;
-
-							}
-
-						});
-
-						// stringify pattern ...
-						tmpl_pattern = tmpl_pattern.join(' ');
-
-					}
-
-				}
-
-				// straight arguments for all other console methods, no backtrace ...
-				else {
+					tmpl_pattern = args.shift();
 					tmpl_args = args;
-					fileline = false;
 				}
 
-				// append fileline ...
-				if ( fileline ) {
+				// generate pattern ...
+				else {
 
-					// add a space if there is other pattern content ...
-					if ( tmpl_pattern ) tmpl_pattern = tmpl_pattern.concat(' ');
+					const stringStyle = OPTIONS.console_substitution_styles[
+						( method == 'groupCollapsed' ? 'group' : method )
+					];
 
-					tmpl_pattern = tmpl_pattern.concat('%c%s');
-					tmpl_args.push(opts.console_substitution_styles.fileline, fileline);
+					// make array ...
+					tmpl_pattern = [];
+
+					// populate pattern and args arrays ...
+					args.forEach(arg=>{
+
+						switch ( typeof arg ) {
+
+							case 'string':
+								tmpl_pattern.push('%c%s%c');
+								// unescape any passed substitution patterns ...
+								arg = arg.replace(/%{2,}(s|d|i|f|o|O|c|\.\d+(d|i|f))/g, '%$1');
+								tmpl_args.push(stringStyle, arg, '');
+								break;
+
+							case 'number':
+								tmpl_pattern.push('%c%s%c');
+								tmpl_args.push(OPTIONS.console_substitution_styles.number, arg, '');
+								break;
+
+							case 'object':
+
+								// resolves to true (not null or undefined) and has special class name property ? prepend and remove ...
+								if ( arg && arg.hasOwnProperty('___class_name') ) {
+									tmpl_pattern.push('%c%s%c');
+									tmpl_args.push(OPTIONS.console_substitution_styles.classname, arg.___class_name, '');
+									delete arg.___class_name;
+								}
+								// no break, passthru ...
+
+							default:
+								tmpl_pattern.push('%o');
+								tmpl_args.push(arg);
+								break;
+
+						}
+
+					});
+
+					// stringify pattern ...
+					tmpl_pattern = tmpl_pattern.join(' ');
 
 				}
 
-				// prepend string pattern to arguments ...
-				if ( tmpl_pattern ) tmpl_args.unshift( tmpl_pattern );
+			}
 
-				// prepend method ...
-				tmpl_args.unshift( method );
+			// straight arguments for all other console methods, no backtrace ...
+			else {
+				tmpl_args = args;
+				fileline = false;
+			}
 
-				// return processed arguments ...
-				return tmpl_args;
+			// append fileline ...
+			if ( fileline ) {
 
-			}).filter( args => args !== false );
+				// add a space if there is other pattern content ...
+				if ( tmpl_pattern ) tmpl_pattern = tmpl_pattern.concat(' ');
 
-			// return processed data ...
-			resolve(data);
+				tmpl_pattern = tmpl_pattern.concat('%c%s');
+				tmpl_args.push(opts.console_substitution_styles.fileline, fileline);
 
-		})
-		.catch(console.error);
+			}
+
+			// prepend string pattern to arguments ...
+			if ( tmpl_pattern ) tmpl_args.unshift( tmpl_pattern );
+
+			// prepend method ...
+			tmpl_args.unshift( method );
+
+			// return processed arguments ...
+			return tmpl_args;
+
+		}).filter( args => args !== false );
+
+		// return processed data ...
+		resolve(data);
 
 	});
 
 }
+
 
 /** Decodes and parses a b64-encoded log message,
 	hands it off to processChromeLoggerData() for processing/formatting,
@@ -376,6 +371,7 @@ function decodeAndProcessLoggerData( tabId, logData ) {
 	}
 }
 
+
 /** Log the given method and URL to tab's dev console using the specified css style and log type ("log"/"group"/"groupCollapsed"/etc). */
 function logDataUrl( tabId, method, url, style, type ) {
 	processChromeLoggerData({
@@ -391,6 +387,7 @@ function endDataUrlGroup(tabId) {
 		rows: [["", "", "groupEnd"]]
 	}).then(data => tabFromId( tabId ).log( data ) );
 }
+
 
 /**
  * Tab.devPort runtime.Port.onMessage event handler.
@@ -424,27 +421,24 @@ function onDevPortMessage( details ) {
 	if (!headers.length)
 		return;
 
-	// load options, process header data ...
-	browser.storage.sync.get(DEFAULT_OPTIONS).then(opts=>{
+	// process header data ...
 
-		// display data url ? log it as chromelogger data ...
-		if ( opts.display_data_url )
-			logDataUrl(details.tabId, details.method, details.url, opts.console_substitution_styles.header, opts.display_url_logtype);
+	// display data url ? log it as chromelogger data ...
+	if ( OPTIONS.display_data_url )
+		logDataUrl(details.tabId, details.method, details.url, OPTIONS.console_substitution_styles.header, OPTIONS.display_url_logtype);
 
-		// parse headers ...
-		headers.forEach(( header )=>{
-			// The `header.value` for all headers with the same name are joined together with commas into one string.
-			// For us, they're all parts of the same b64-encoded log message. Split them and re-join w/out the comma...
-			const headerValues = header.value.split(',').join('');
-			// ... and process as one log message (to be decoded together).
-			decodeAndProcessLoggerData(details.tabId, headerValues);
-		});
-
-		// display data url as group ? log the `groupEnd()` part ...
-		if ( opts.display_data_url && opts.display_url_logtype != "log" )
-			endDataUrlGroup(details.tabId);
-
+	// parse headers ...
+	headers.forEach(( header )=>{
+		// The `header.value` for all headers with the same name are joined together with commas into one string.
+		// For us, they're all parts of the same b64-encoded log message. Split them and re-join w/out the comma...
+		const headerValues = header.value.split(',').join('');
+		// ... and process as one log message (to be decoded together).
+		decodeAndProcessLoggerData(details.tabId, headerValues);
 	});
+
+	// display data url as group ? log the `groupEnd()` part ...
+	if ( OPTIONS.display_data_url && OPTIONS.display_url_logtype != "log" )
+		endDataUrlGroup(details.tabId);
 
 }
 
@@ -480,48 +474,58 @@ function toggleInjectRequestHeaders(tabKeys, forceAction = 0) {
 	if (!Array.isArray(tabKeys))
 		tabKeys = [ tabKeys ];
 
-	// read current settings
-	browser.storage.sync.get({
-		inject_req_headers: DEFAULT_OPTIONS.inject_req_headers,
-		inject_req_headers_for_types: DEFAULT_OPTIONS.inject_req_headers_for_types,
-	}).then(opts => {
+	// loop over each tab whose listener we'll be updating
+	for (const tId of tabKeys) {
+		const tab = tabs[tId];
+		if (!tab || !tab.id)
+			continue;
 
-		// loop over each tab whose listener we'll be updating
-		for (const tId of tabKeys) {
-			const tab = tabs[tId];
-			if (!tab || !tab.id)
-				continue;
+		// currently connected?
+		let isSubbed = browser.webRequest.onBeforeSendHeaders.hasListener( tab.onBeforeSendHeaders );
 
-			// currently connected?
-			let isSubbed = browser.webRequest.onBeforeSendHeaders.hasListener( tab.onBeforeSendHeaders );
-
-			// need to disconnect listener if inject headers setting is false, if we're modifying the request type filter, or forcing unsub
-			if (isSubbed && (forceAction || !opts.inject_req_headers)) {
-				browser.webRequest.onBeforeSendHeaders.removeListener( tab.onBeforeSendHeaders );
-				isSubbed = false;
-			}
-
-			// (re)connect event handler if not already connected, setting is enabled, unsub is not forced, and list of request filters is valid
-			if (!isSubbed && opts.inject_req_headers && forceAction != 2 && Array.isArray(opts.inject_req_headers_for_types) && opts.inject_req_headers_for_types.length) {
-				browser.webRequest.onBeforeSendHeaders.addListener(
-					tab.onBeforeSendHeaders,
-					{
-						tabId: tab.id,
-						urls: [ "<all_urls>" ],
-						types: opts.inject_req_headers_for_types,
-					},
-					[ "blocking", "requestHeaders" ],
-				);
-			}
+		// need to disconnect listener if inject headers setting is false, if we're modifying the request type filter, or forcing unsub
+		if ( isSubbed && (forceAction || !OPTIONS.inject_req_headers) ) {
+			browser.webRequest.onBeforeSendHeaders.removeListener( tab.onBeforeSendHeaders );
+			isSubbed = false;
 		}
 
-	});
+		// (re)connect event handler if not already connected, setting is enabled, unsub is not forced, and list of request filters is valid
+		if (
+			!isSubbed && OPTIONS.inject_req_headers && forceAction != 2 &&
+			Array.isArray(OPTIONS.inject_req_headers_for_types) &&
+			OPTIONS.inject_req_headers_for_types.length
+		) {
+			browser.webRequest.onBeforeSendHeaders.addListener(
+				tab.onBeforeSendHeaders,
+				{
+					tabId: tab.id,
+					urls: [ "<all_urls>" ],
+					types: OPTIONS.inject_req_headers_for_types,
+				},
+				[ "blocking", "requestHeaders" ],
+			);
+		}
+	}
+
 }
 
+
 /**
-	Settings value change handler. Used to set up header injection features when settings are changed w/out re-starting the extension.
+	Settings value change handler.
+	Used to update runtime options cache and set up header injection features when settings are changed w/out re-starting the extension.
 */
 function onStorageChanged(changes, area) {
+
+	if (area != "sync")
+		return;
+
+	// Update cached options with all changes.
+	Object.assign(
+		OPTIONS,
+		Object.fromEntries(
+			Object.entries(changes).map(([key,val]) => [ key, structuredClone(val.newValue) ])
+		)
+	);
 
 	// Check if we need to (re)connect/disconnect header injection events;
 	// Check that value actually did change since often they're in the changes list even if unchanged;
@@ -545,10 +549,18 @@ function onStorageChanged(changes, area) {
 
 }
 
+
+/** Initial load of saved option values into local cache. */
+browser.storage.sync.get(DEFAULT_OPTIONS).then((opts) => {
+	Object.assign(OPTIONS, structuredClone(opts));
+});
+
+
 /**
 	Listener / Assigns onStorageChanged handler for extension settings change events.
 */
 browser.storage.onChanged.addListener(onStorageChanged);
+
 
 /**
  * Listener / Assigns tab object and handlers connecting devtools context when devtools are opened on a tab.
