@@ -141,13 +141,21 @@
 
 			<legend>Misc. Settings</legend>
 
-			<label for="display_data_url">Display URL Data Header</label>
+			<label>Display URL Data Header</label>
 			<fieldset class="subset">
 				<label for="display_data_url_0"><input type="radio" name="display_data_url" id="display_data_url_0" value=""/>Hidden</label>
 				<label for="display_data_url_1"><input type="radio" name="display_data_url" id="display_data_url_1" value="log"/>Basic</label>
 				<label for="display_data_url_2"><input type="radio" name="display_data_url" id="display_data_url_2" value="group"/>Group expanded</label>
 				<label for="display_data_url_3"><input type="radio" name="display_data_url" id="display_data_url_3" value="groupCollapsed"/>Group collapsed</label>
 				<span class="help" title="The is the URL where data is parsed from, output as a separate console log entry. Styled by Data Header (above).">?</span>
+			</fieldset>
+
+			<label>Backtrace Output Position</label>
+			<fieldset class="subset">
+				<label for="backtrace_position_0"><input type="radio" name="backtrace_position" id="backtrace_position_0" value="0"/>Hidden</label>
+				<label for="backtrace_position_1"><input type="radio" name="backtrace_position" id="backtrace_position_1" value="1"/>Leading</label>
+				<label for="backtrace_position_2"><input type="radio" name="backtrace_position" id="backtrace_position_2" value="2"/>Trailing</label>
+				<span class="help" title="This is the file name and line number sent from the server with each log record. Styled by 'backtrace' option (above).">?</span>
 			</fieldset>
 
 			<div class="align-top">

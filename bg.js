@@ -329,13 +329,27 @@ function processChromeLoggerData( data ) {
 			}
 
 			// append fileline ...
-			if ( fileline ) {
+			if ( fileline && OPTIONS.backtrace_position != BACKTRACE_POSITION.NONE ) {
 
-				// add a space if there is other pattern content ...
-				if ( tmpl_pattern ) tmpl_pattern = tmpl_pattern.concat(' ');
+				let fl_pattern = '%c%s%c';
+				const fl_args = [ OPTIONS.console_substitution_styles.fileline, fileline, '' ];
 
-				tmpl_pattern = tmpl_pattern.concat('%c%s');
-				tmpl_args.push(opts.console_substitution_styles.fileline, fileline);
+				switch ( OPTIONS.backtrace_position )
+				{
+					case BACKTRACE_POSITION.TRAILING:
+						// prepend a space if there is other pattern content ...
+						if ( tmpl_pattern )
+							fl_pattern = " " + fl_pattern;
+						tmpl_pattern = tmpl_pattern.concat(fl_pattern);
+						tmpl_args.push(...fl_args);
+						break;
+
+					case BACKTRACE_POSITION.LEADING:
+						// assume that the style template will handle spacing (margin/padding)
+						tmpl_pattern = fl_pattern.concat(tmpl_pattern);
+						tmpl_args.unshift(...fl_args);
+						break;
+				}
 
 			}
 

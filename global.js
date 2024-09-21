@@ -3,6 +3,13 @@
  * Global scripts.
  */
 
+/** Enum for backtrace position option. */
+const BACKTRACE_POSITION = {
+	NONE: 0,
+	LEADING: 1,
+	TRAILING: 2
+}
+
 /**
  * Default options object.
  * @since 1.5
@@ -28,6 +35,8 @@ const DEFAULT_OPTIONS = {
 	inject_req_headers: false,
 	// add  those headers for these types of requests  (https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest/ResourceType)
 	inject_req_headers_for_types: [ "main_frame", "sub_frame", "websocket", "xmlhttprequest" ],
+	// location of backtrace (file + line) in relation to rest of message output
+	backtrace_position: BACKTRACE_POSITION.TRAILING,
 };
 
 
