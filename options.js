@@ -49,7 +49,7 @@ function populateForm( opts ) {
 }
 
 
-document.addEventListener("DOMContentLoaded", event=>{
+document.addEventListener("DOMContentLoaded", () => {
 
 	// style inputs ...
 	const console_substitution_style_inputs = document.querySelectorAll("form fieldset#console_substitution_styles input"),
@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", event=>{
 	// update label style on input update ...
 	console_substitution_style_inputs.forEach(input=>{
 		input.addEventListener("keyup", event=>{
-			event.target.previousElementSibling.style = event.target.value;
+			event.target.previousElementSibling.querySelector('label').style = event.target.value;
 		});
 	});
 
@@ -108,7 +108,7 @@ document.addEventListener("DOMContentLoaded", event=>{
 
 			// update collection ...
 			console_substitution_style_inputs.forEach(input=>{
-				console_substitution_styles[ input.id.substr( input.id.indexOf('-') + 1 ) ] = input.value;
+				console_substitution_styles[ input.id.substr( input.id.indexOf('-') + 1 ) ] = input.value.trim();
 			});
 
 			// save settings ...

@@ -20,44 +20,37 @@
 
 			fieldset {
 				border-radius: 3px;
-				clear: both;
 				margin-bottom: 1em;
+				display: grid;
+				grid-template-columns: 25% auto;
+				gap: 1em;
+				align-items: stretch;
 			}
 
 			legend {
-				margin-left: 1em;
-			}
-
-			form > fieldset > *:not(legend) {
-				display: block;
-				float: left;
+				width: 25%;
+  			padding-left: 1em;
+				grid-column: 1 / -1;
 			}
 
 			form > fieldset > *:nth-child(even):not(legend) {
-				width: 30%;
+				overflow: clip;
 				text-align: right;
-				margin-right: 1%;
-			}
-
-			form > fieldset > *:nth-child(odd) {
-				width: 65%;
-				clear: right;
-				margin-bottom: 1em;
-			}
-
-			form > fieldset > *:last-child {
-				margin-bottom: 0em;
+				align-content: center;
 			}
 
 			fieldset.subset {
 				border-width: 0;
 				padding: 0;
 				margin: .4em 0 0;
+				display: flex;
+				flex-flow: row wrap;
+				row-gap: 0.3em;
+				align-items: center;
 			}
 
-			fieldset.subset > *:nth-child(odd) {
-				margin-right: .4em;
-			}
+			.align-top { align-self: start; }
+			.flex-grow { flex-grow: 1; }
 
 			.buttonbox {
 				display: grid;
@@ -97,31 +90,31 @@
 
 			<legend>Substitution Styles</legend>
 
-			<label for="console_substitution_styles-error">Console.error()</label>
+			<div><label for="console_substitution_styles-error">Console.error()</label></div>
 			<input type="text" id="console_substitution_styles-error"/>
 
-			<label for="console_substitution_styles-warn">Console.warn()</label>
+			<div><label for="console_substitution_styles-warn">Console.warn()</label></div>
 			<input type="text" id="console_substitution_styles-warn"/>
 
-			<label for="console_substitution_styles-info">Console.info()</label>
+			<div><label for="console_substitution_styles-info">Console.info()</label></div>
 			<input type="text" id="console_substitution_styles-info"/>
 
-			<label for="console_substitution_styles-log">Console.log()</label>
+			<div><label for="console_substitution_styles-log">Console.log()</label></div>
 			<input type="text" id="console_substitution_styles-log"/>
 
-			<label for="console_substitution_styles-group">Console.group()</label>
+			<div><label for="console_substitution_styles-group">Console.group()</label></div>
 			<input type="text" id="console_substitution_styles-group"/>
 
-			<label for="console_substitution_styles-number">Number</label>
+			<div><label for="console_substitution_styles-number">Number</label></div>
 			<input type="text" id="console_substitution_styles-number"/>
 
-			<label for="console_substitution_styles-fileline">/backtrace/file:line</label>
+			<div><label for="console_substitution_styles-fileline">/backtrace/file:line</label></div>
 			<input type="text" id="console_substitution_styles-fileline"/>
 
-			<label for="console_substitution_styles-classname">Class Name</label>
+			<div><label for="console_substitution_styles-classname">Class Name</label></div>
 			<input type="text" id="console_substitution_styles-classname"/>
 
-			<label for="console_substitution_styles-header">Data Header</label>
+			<div><label for="console_substitution_styles-header">Data Header</label></div>
 			<input type="text" id="console_substitution_styles-header"/>
 
 		</fieldset>
@@ -130,29 +123,33 @@
 
 			<legend>Misc. Settings</legend>
 
-			<span><input type="checkbox" id="display_data_url"/></span>
-			<span>
+			<div class="align-top">
+				<input type="checkbox" id="display_data_url"/>
+			</div>
+			<div>
 				<label for="display_data_url">Display URL where data is parsed from as a console log entry.<br />Styled by Data Header (above).</label>
 				<fieldset id="display_url_options" class="subset">
 					<label for="display_url_logtype">Log Data URL Header as:</label>
-					<select id="display_url_logtype">
+					<select id="display_url_logtype" class="flex-grow">
 						<option value="log">Not grouped</option>
 						<option value="group">Group - expanded</option>
 						<option value="groupCollapsed">Group - collapsed</option>
 					</select>
 				</fieldset>
-			</span>
+			</div>
 
-			<span><input type="checkbox" id="inject_req_headers"/></span>
-			<span>
+			<div class="align-top">
+				<input type="checkbox" id="inject_req_headers"/>
+			</div>
+			<div>
 				<label for="inject_req_headers">Add '<i>X-ChromeLogger-Enabled</i>' and '<i>X-ChromeLogger-Version</i>' headers to requests when dev tools are active on a browser tab.</label>
 				<fieldset id="inject_req_headers_options" class="subset">
 					<label for="inject_req_headers_for_types">
 						Only for these <a href="https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest/ResourceType">request types</a> (separate values with commas):
 					</label><br />
-					<input id="inject_req_headers_for_types" type="text" style="width: 100%;" />
+					<input id="inject_req_headers_for_types" type="text" class="flex-grow" />
 				</fieldset>
-			</span>
+			</div>
 
 		</fieldset>
 
