@@ -6,6 +6,9 @@
 
 // message box singleton tracking
 var messageTimerId = null;
+// the options form
+var form = null;
+
 
 /** Shows a temporary message in the settings form, eg. that the settings were saved. */
 function showMessage(message, status = "ok") {
@@ -39,11 +42,9 @@ function populateForm( opts ) {
 	});
 
 	// misc. settings ...
-	document.querySelector('input#display_data_url').checked = opts.display_data_url;
-	document.querySelector("#display_url_logtype").value = opts.display_url_logtype;
-	document.querySelector("#display_url_options").disabled = !opts.display_data_url;
-	document.querySelector('input#inject_req_headers').checked = opts.inject_req_headers;
-	document.querySelector('input#inject_req_headers_for_types').value = opts.inject_req_headers_for_types.join(', ');
+	form.display_data_url.value = opts.display_data_url;
+	form.inject_req_headers.checked = opts.inject_req_headers;
+	form.inject_req_headers_for_types.value = opts.inject_req_headers_for_types.join(', ');
 	document.querySelector("#inject_req_headers_options").disabled = !opts.inject_req_headers;
 
 }
@@ -51,11 +52,10 @@ function populateForm( opts ) {
 
 document.addEventListener("DOMContentLoaded", () => {
 
+	form = document.querySelector("form");
+
 	// style inputs ...
-	const console_substitution_style_inputs = document.querySelectorAll("form fieldset#console_substitution_styles input"),
-		// checkbox options
-		display_data_url_checkbox = document.querySelector("form input#display_data_url"),
-		inject_req_headers_checkbox = document.querySelector('form input#inject_req_headers');
+	const console_substitution_style_inputs = form.querySelectorAll("fieldset#console_substitution_styles input");
 
 	// update label style on input update ...
 	console_substitution_style_inputs.forEach(input=>{
@@ -69,18 +69,13 @@ document.addEventListener("DOMContentLoaded", () => {
 	.then(populateForm)
 	.catch(error=>{ console.error(error); });
 
-	// set change handler on "display url" option to en/disable the "show as group" option accordingly
-	display_data_url_checkbox.addEventListener("change", () => {
-		document.querySelector("#display_url_options").disabled = !display_data_url_checkbox.checked;
-	});
-
 	// set change handler on "inject headers" option to en/disable the "request types" option accordingly
-	inject_req_headers_checkbox.addEventListener("change", () => {
-		document.querySelector("#inject_req_headers_options").disabled = !inject_req_headers_checkbox.checked;
+	form.inject_req_headers.addEventListener("change", () => {
+		document.querySelector("#inject_req_headers_options").disabled = !form.inject_req_headers.checked;
 	});
 
 	// onsubmit ...
-	document.querySelector("form").addEventListener("submit", event=>{
+	form.addEventListener("submit", event=>{
 
 		event.preventDefault();
 
@@ -116,12 +111,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
 				// styles ...
 				console_substitution_styles: console_substitution_styles,
-				// display url and log type (log|group|groupCollapsed) ...
-				display_data_url: display_data_url_checkbox.checked,
-				display_url_logtype: document.querySelector("#display_url_logtype").value,
+				// display url log type (''|log|group|groupCollapsed) ...
+				display_data_url: form.display_data_url.value,
 				// inject request headers and request types list
-				inject_req_headers: inject_req_headers_checkbox.checked,
-				inject_req_headers_for_types: document.querySelector('input#inject_req_headers_for_types').value.split(/\s*,\s*/),
+				inject_req_headers: form.inject_req_headers.checked,
+				inject_req_headers_for_types: form.inject_req_headers_for_types.value.split(/\s*,\s*/),
 
 			})
 			.then(() => showMessage("Options saved!"))

@@ -13,9 +13,10 @@
 		<style type="text/css">
 
 			body {
-				margin: 1em .5em;
+				margin: 1em .5em 0;
 				/* This width fits in current Firefox settings window and forces Chrome's to be large enough, w/out scrolling. */
-				min-width: 600px;
+				min-width: 620px;
+				overflow: auto;  /* for sticky button box */
 			}
 
 			fieldset {
@@ -46,17 +47,34 @@
 				display: flex;
 				flex-flow: row wrap;
 				row-gap: 0.3em;
+				column-gap: .75em;
 				align-items: center;
 			}
 
 			.align-top { align-self: start; }
 			.flex-grow { flex-grow: 1; }
 
+			.help {
+				border: 1.75px solid currentColor;
+				border-radius: 50%;
+				padding: .1em .5em;
+				font-weight: bold;
+				margin-left: auto;
+				margin-right: .1em;
+				cursor: help;
+			}
+
 			.buttonbox {
 				display: grid;
 				grid-template-columns: 1fr 1fr 2fr;
 				justify-items: center;
 				column-gap: 0em;
+				background-color: color-mix(in srgb, Canvas 90%, transparent);
+				padding: .75em 0;
+				position: sticky;
+				left: 0;
+				right: 0;
+				bottom: .5em;
 			}
 
 			/* the message_area displays short status messages, like "settings saved" */
@@ -123,26 +141,20 @@
 
 			<legend>Misc. Settings</legend>
 
-			<div class="align-top">
-				<input type="checkbox" id="display_data_url"/>
-			</div>
-			<div>
-				<label for="display_data_url">Display URL where data is parsed from as a console log entry.<br />Styled by Data Header (above).</label>
-				<fieldset id="display_url_options" class="subset">
-					<label for="display_url_logtype">Log Data URL Header as:</label>
-					<select id="display_url_logtype" class="flex-grow">
-						<option value="log">Not grouped</option>
-						<option value="group">Group - expanded</option>
-						<option value="groupCollapsed">Group - collapsed</option>
-					</select>
-				</fieldset>
-			</div>
+			<label for="display_data_url">Display URL Data Header</label>
+			<fieldset class="subset">
+				<label for="display_data_url_0"><input type="radio" name="display_data_url" id="display_data_url_0" value=""/>Hidden</label>
+				<label for="display_data_url_1"><input type="radio" name="display_data_url" id="display_data_url_1" value="log"/>Basic</label>
+				<label for="display_data_url_2"><input type="radio" name="display_data_url" id="display_data_url_2" value="group"/>Group expanded</label>
+				<label for="display_data_url_3"><input type="radio" name="display_data_url" id="display_data_url_3" value="groupCollapsed"/>Group collapsed</label>
+				<span class="help" title="The is the URL where data is parsed from, output as a separate console log entry. Styled by Data Header (above).">?</span>
+			</fieldset>
 
 			<div class="align-top">
 				<input type="checkbox" id="inject_req_headers"/>
 			</div>
 			<div>
-				<label for="inject_req_headers">Add '<i>X-ChromeLogger-Enabled</i>' and '<i>X-ChromeLogger-Version</i>' headers to requests when dev tools are active on a browser tab.</label>
+				<label for="inject_req_headers">Add '<i>X-ChromeLogger-Enabled</i>' and '<i>X-ChromeLogger-Version</i>' headers to requests when ChromeLogger is active on a browser tab.</label>
 				<fieldset id="inject_req_headers_options" class="subset">
 					<label for="inject_req_headers_for_types">
 						Only for these <a href="https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest/ResourceType">request types</a> (separate values with commas):

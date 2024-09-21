@@ -23,8 +23,7 @@ const DEFAULT_OPTIONS = {
 		classname: 'font-weight:bold;',
 		header: 'display:block;background-color:black;color:white;text-align:center;padding:0.2em;border-radius:0.3em;'
 	},
-	display_data_url: true,
-	display_url_logtype: 'log',
+	display_data_url: 'log',
 	// add "X-ConsoleLogger-Enabled" and "-Version" request headers?
 	inject_req_headers: false,
 	// add  those headers for these types of requests  (https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest/ResourceType)

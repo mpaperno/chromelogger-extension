@@ -435,7 +435,7 @@ function onDevPortMessage( details ) {
 
 	// display data url ? log it as chromelogger data ...
 	if ( OPTIONS.display_data_url )
-		logDataUrl(details.tabId, details.method, details.url, OPTIONS.console_substitution_styles.header, OPTIONS.display_url_logtype);
+		logDataUrl(details.tabId, details.method, details.url, OPTIONS.console_substitution_styles.header, OPTIONS.display_data_url);
 
 	// In Chrome each header comes individually, even if they have the same names (in Firefox all values are joined together, see note below).
 	// For us, all headers with the same name are part of one B64-encoded message (log entry), so
@@ -456,7 +456,7 @@ function onDevPortMessage( details ) {
 	buffer.forEach( (value) => decodeAndProcessLoggerData(details.tabId, value)	);
 
 	// display data url as group ? log the `groupEnd()` part ...
-	if ( OPTIONS.display_data_url && OPTIONS.display_url_logtype != "log" )
+	if ( OPTIONS.display_data_url.startsWith('group') )
 		endDataUrlGroup(details.tabId);
 
 }
@@ -571,6 +571,13 @@ function onStorageChanged(changes, area) {
 
 /** Initial load of saved option values into local cache. */
 browser.storage.sync.get(DEFAULT_OPTIONS).then((opts) => {
+
+	// convert from legacy setting
+	if (typeof opts.display_data_url == 'boolean') {
+		opts.display_data_url = opts.display_data_url ? "log" : "";
+		browser.storage.sync.set({'display_data_url': opts.display_data_url})
+	}
+
 	Object.assign(OPTIONS, structuredClone(opts));
 });
 
