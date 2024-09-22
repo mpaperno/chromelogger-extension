@@ -37,7 +37,7 @@ function populateForm( opts ) {
 		let input = document.querySelector( 'input#console_substitution_styles-'.concat(key) );
 		if ( input ) {
 			input.value = value;
-			input.dispatchEvent(new Event('keyup')); // trigger change event to update label
+			input.dispatchEvent(new Event('input')); // trigger change event to update label
 		}
 	});
 
@@ -45,11 +45,16 @@ function populateForm( opts ) {
 	form.display_data_url.value = opts.display_data_url;
 	form.inject_req_headers.checked = opts.inject_req_headers;
 	form.inject_req_headers_for_types.value = opts.inject_req_headers_for_types.join(', ');
-	document.querySelector("#inject_req_headers_options").disabled = !opts.inject_req_headers;
+	form.inject_req_headers_for_types.disabled = !opts.inject_req_headers;
 	form.backtrace_position.value = opts.backtrace_position.toString();
 
 }
 
+function populateFormFromStorage() {
+	browser.storage.sync.get(DEFAULT_OPTIONS)
+	.then(populateForm)
+	.catch(error=>{ console.error(error); });
+}
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -60,19 +65,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
 	// update label style on input update ...
 	console_substitution_style_inputs.forEach(input=>{
-		input.addEventListener("keyup", event=>{
+		input.addEventListener("input", event=>{
 			event.target.previousElementSibling.querySelector('label').style = event.target.value;
 		});
 	});
 
 	// populate form from options ...
-	browser.storage.sync.get(DEFAULT_OPTIONS)
-	.then(populateForm)
-	.catch(error=>{ console.error(error); });
+	populateFormFromStorage();
 
 	// set change handler on "inject headers" option to en/disable the "request types" option accordingly
 	form.inject_req_headers.addEventListener("change", () => {
-		document.querySelector("#inject_req_headers_options").disabled = !form.inject_req_headers.checked;
+		form.inject_req_headers_for_types.disabled = !form.inject_req_headers.checked;
 	});
 
 	// onsubmit ...
@@ -80,24 +83,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
 		event.preventDefault();
 
-		// reset ...
-		if ( event.submitter.id == 'reset' ) {
+		// reset form to defaults ...
+		if ( event.submitter.id == 'reset_defaults' ) {
 
-			// set from default options ? update form from default options ...
-			browser.storage.sync.set(DEFAULT_OPTIONS)
-			.then(()=>{
-				populateForm(DEFAULT_OPTIONS);
-				showMessage("Options reset to defaults.");
-			})
-			.catch(error=>{
-				console.error(error);
-				showMessage("Error: " + error.message, "error");
-			});
+			populateForm(DEFAULT_OPTIONS);
+			showMessage("Default values are shown, <u>not saved yet</u>.", "warn");
+			return;
+
+		}
+
+		// reset form to saved options
+		if ( event.submitter.id == 'reset_form' ) {
+
+			populateFormFromStorage();
+			showMessage("Form reset to saved option values.");
+			return;
 
 		}
 
 		// save ...
-		else {
+		if ( event.submitter.id == 'save' ) {
 
 			// styles collection ...
 			let console_substitution_styles = {};

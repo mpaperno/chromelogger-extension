@@ -15,7 +15,7 @@
 			body {
 				margin: 1em .5em 0;
 				/* This width fits in current Firefox settings window and forces Chrome's to be large enough, w/out scrolling. */
-				min-width: 620px;
+				min-width: 600px;
 				overflow: auto;  /* for sticky button box */
 			}
 
@@ -43,7 +43,7 @@
 			fieldset.subset {
 				border-width: 0;
 				padding: 0;
-				margin: .4em 0 0;
+				margin: 0;
 				display: flex;
 				flex-flow: row wrap;
 				row-gap: 0.3em;
@@ -66,11 +66,12 @@
 
 			.buttonbox {
 				display: grid;
-				grid-template-columns: 1fr 1fr 2fr;
+				grid-template-columns: repeat(3, max-content) 1fr;
+				align-items: stretch;
 				justify-items: center;
-				column-gap: 0em;
+				column-gap: 2.5em;
 				background-color: color-mix(in srgb, Canvas 90%, transparent);
-				padding: .75em 0;
+				padding: .75em .25em;
 				position: sticky;
 				left: 0;
 				right: 0;
@@ -81,9 +82,9 @@
 			#message_area {
 				height: 2em;
 				justify-self: right;
-				padding-right: 1em;
+				padding-right: .25em;
 				font-size: 1.2em;
-				overflow: auto;
+				overflow: hidden;
 				opacity: 0;
 				transition: opacity 1s;
 			}
@@ -163,21 +164,21 @@
 			<div class="align-top">
 				<input type="checkbox" id="inject_req_headers"/>
 			</div>
-			<div>
-				<label for="inject_req_headers">Add '<i>X-ChromeLogger-Enabled</i>' and '<i>X-ChromeLogger-Version</i>' headers to requests when ChromeLogger is active on a browser tab.</label>
-				<fieldset id="inject_req_headers_options" class="subset">
-					<label for="inject_req_headers_for_types">
-						Only for these <a href="https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest/ResourceType">request types</a> (separate values with commas):
-					</label><br />
-					<input id="inject_req_headers_for_types" type="text" class="flex-grow" />
-				</fieldset>
-			</div>
+			<fieldset class="subset">
+				<label for="inject_req_headers" style="max-width: 90%;">Add '<i>X-ChromeLogger-Enabled</i>' and '<i>X-ChromeLogger-Version</i>' headers to requests when ChromeLogger is active on a browser tab.</label>
+				<span class="help" title="These headers can be used by a server-side implementation to determine if ChromeLogger is enabled on a tab, and the available protocol version.">?</span>
+				<label for="inject_req_headers_for_types">
+					Only for these <a href="https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest/ResourceType">request types</a> (separate values with commas):
+				</label>
+				<input id="inject_req_headers_for_types" type="text" class="flex-grow" />
+			</fieldset>
 
 		</fieldset>
 
 		<section class="buttonbox">
-			<button id="reset">Reset to Defaults</button>
-			<button id="save">Save Options</button>
+			<button id="reset_defaults" title="Populate all option form values with defaults. Does NOT save the options automatically.">Load Defaults</button>
+			<button id="reset_form" title="Reset all option form values to the last saved version.">Reset</button>
+			<button id="save" title="Save the options form values.">Save Options</button>
 			<div id="message_area"></div>  <!-- for dynamic status messages -->
 		</section>
 
