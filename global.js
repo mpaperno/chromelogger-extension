@@ -54,7 +54,7 @@ function cleanObjectProperties( obj ) {
 	if ( typeof obj !== 'object' || obj === null ) return obj;
 
 	// removes length property from arrays ...
-	if ( Array.isArray(obj) ) obj = Object.assign({}, obj);
+	// if ( Array.isArray(obj) ) obj = Object.assign({}, obj);
 
 	// remove annoying __proto__ property ...
 	obj.__proto__ = null;
