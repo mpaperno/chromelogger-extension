@@ -13,7 +13,8 @@ var form = null;
 /** Shows a temporary message in the settings form, eg. that the settings were saved. */
 function showMessage(message, status = "ok") {
 	var msg_el = document.getElementById("message_area");
-	msg_el.innerHTML = message;
+	msg_el.firstChild?.remove();
+	msg_el.appendChild(document.createTextNode(message));
 	msg_el.classList.add('visible');
 	msg_el.setAttribute('data-status', status);
 
@@ -87,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		if ( event.submitter.id == 'reset_defaults' ) {
 
 			populateForm(DEFAULT_OPTIONS);
-			showMessage("Default values are shown, <u>not saved yet</u>.", "warn");
+			showMessage("Default values are shown, but not saved yet.", "warn");
 			return;
 
 		}
