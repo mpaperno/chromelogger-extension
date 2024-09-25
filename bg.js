@@ -613,8 +613,16 @@ browser.storage.onChanged.addListener(onStorageChanged);
  */
 browser.runtime.onConnect.addListener(( port ) => {
 
-	var tabId = tabIdFromPort(port),
-		tabKey = port.name,
+	var tabId = tabIdFromPort(port);
+
+	// On Chrome, connecting DevTools to Chrome itself (eg. to debug an extension)
+	// will pass a port with a non-numeric name ('tabnull'). We don't want this DevTools anyway.
+	if (!Number.isFinite(tabId)) {
+		console.info("Connecting tab ID '%d' is invalid; port details:", tabId, port);
+		return;
+	}
+
+	var tabKey = port.name,
 		tab = tabs[ tabKey ];
 
 	// ports change when devtools are closed/opened so [re]assign port event handlers ...
