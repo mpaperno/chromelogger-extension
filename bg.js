@@ -592,7 +592,17 @@ browser.storage.sync.get(DEFAULT_OPTIONS).then((opts) => {
 		browser.storage.sync.set({'display_data_url': opts.display_data_url})
 	}
 
-	Object.assign(OPTIONS, structuredClone(opts));
+	// NOTE: Firefox `storage.sync.get()` doesn't seem to populate defaults for nested objects! (Works fine in Chrome.)
+	// The `opts.console_substitution_styles` nested object won't show any new option keys we may add.
+	// So a simple Object.assign() won't cut it because it may clobber our defaults in `OPTIONS`.
+	// ** The simplified object copy strategy below will only work for one level of nesting. **
+	Object.entries(opts).forEach(([key, val]) => {
+		if (val instanceof Object)
+			Object.assign(OPTIONS[key], val);
+		else
+			OPTIONS[key] = val;
+	});
+
 });
 
 

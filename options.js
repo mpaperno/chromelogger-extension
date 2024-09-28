@@ -34,10 +34,10 @@ function showMessage(message, status = "ok") {
 function populateForm( opts ) {
 
 	// populate substitution styles ...
-	Object.entries(opts.console_substitution_styles).forEach(([key, value])=>{
-		let input = document.querySelector( 'input#console_substitution_styles-'.concat(key) );
+	Object.entries(DEFAULT_OPTIONS.console_substitution_styles).forEach(([key, value])=>{
+		const input = document.querySelector( 'input#console_substitution_styles-'.concat(key) );
 		if ( input ) {
-			input.value = value;
+			input.value = opts.console_substitution_styles[key] ?? value;
 			input.dispatchEvent(new Event('input')); // trigger change event to update label
 		}
 	});
