@@ -118,7 +118,7 @@ class Tab {
 		*/
 		this.onBeforeSendHeaders = function(details) {
 			details.requestHeaders.push(
-				{ name: "X-ChromeLogger-Enable", value: "1" },
+				{ name: "X-ChromeLogger-Enable", value: OPTIONS.server_en_flags.toString() },
 				{ name: "X-ChromeLogger-Version", value: version }
 			);
 			// console.log(details.requestHeaders);

@@ -1,0 +1,160 @@
+<!doctype html>
+<!--/**
+ * Extension popup menu page.
+ * @since 3.0
+*/-->
+<html>
+	<head>
+		<title>ChromeLogger Menu</title>
+		<meta charset="utf-8"/>
+		<meta name="color-scheme" content="dark light">
+		<style type="text/css">
+
+			:root {
+				--color-bg: Canvas;
+				--color-fg: CanvasText;
+				--color-dim: GrayText;
+				--color-hl-bg: Highlight;
+				--color-hl-fg: CanvasText;
+				--color-warn-fg: orange;
+			}
+
+			body {
+				background-color: var(--color-bg);
+				color: var(--color-fg);
+				font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+				font-size: 14px;
+				width: auto;
+				overflow: visible;
+				margin: 0;
+			}
+
+			.menu-group-label {
+				display: block;
+				white-space: nowrap;
+				line-height: 1.5em;
+				padding: .1em 2em;
+				color: color-mix(in srgb, currentColor 55%, transparent);
+				user-select: none;
+			}
+
+			.menu-item {
+				display: flex;
+				flex-direction: row;
+				column-gap: .5em;
+				align-items: center;
+				white-space: nowrap;
+				line-height: 2em;
+				cursor: pointer;
+				border-width: 1px 0;
+				border-style: solid;
+				border-color: transparent;
+				padding: 0 1em 0 .75em;
+				user-select: none;
+			}
+
+			.menu-item:hover:not(:has(input:disabled)) {
+				border-color: var(--color-dim);
+				color: var(--color-hl-fg);
+				--bg1: color-mix(in srgb, var(--color-hl-bg) 50%, transparent);
+				--bg2: color-mix(in srgb, var(--bg1) 60%, transparent);
+				--bg3: color-mix(in srgb, var(--bg1) 30%, transparent);
+				background-image: linear-gradient(to bottom, var(--bg1) 0%, var(--bg2) 35%, var(--bg3) 100%);
+			}
+
+			.menu-item.disabled,
+			.menu-item:has(input:disabled) {
+				opacity: .5;
+				background-color: transparent !important;
+			}
+
+			.menu-separator {
+				width: 100%;
+				border-top: 1px solid var(--color-dim);
+				margin: .25em 0;
+			}
+
+			.icon {
+				display: inline-block;
+				background-color: currentColor;
+				width: 16px;
+				height: 16px;
+				margin: 0 4px;
+			}
+
+			.icon-options {
+				mask-image: url('/icons/options.svg');
+			}
+
+			#open_ext_options {
+				padding-top: .75em;
+				padding-bottom: .25em;
+			}
+
+			#headers_disabled_warning {
+				color: var(--color-warn-fg);
+				padding: .5em 2em;
+				font-weight: bold;
+				max-width: 18em;
+				border-bottom: 1px solid var(--color-dim);
+			}
+
+		</style>
+
+		<script type="text/javascript" src="browser-polyfill.min.js" defer></script>
+		<script type="text/javascript" src="global.js" defer></script>
+		<script type="text/javascript" src="popup_menu.js" defer></script>
+
+	</head>
+	<body>
+
+		<div id="headers_disabled_warning" hidden>
+			Injection of <i>X-ChromeLogger</i> headers is disabled in extention options. The settings below will have no effect.
+		</div>
+
+		<div class="menu-group-label">
+			<span class="menu-item-text">Server-Side Message Filters</span>
+		</div>
+
+		<label for="level_trace" class="menu-item">
+			<input type="checkbox" id="level_trace" name="TRACE" class="opt-flag opt-type">
+			<span class="menu-item-text">Trace (Log)</span>
+		</label>
+		<label for="level_debug" class="menu-item">
+			<input type="checkbox" id="level_debug" name="DEBUG" class="opt-flag opt-type">
+			<span class="menu-item-text">Debug</span>
+		</label>
+		<label for="level_info" class="menu-item">
+			<input type="checkbox" id="level_info" name="INFO" class="opt-flag opt-type">
+			<span class="menu-item-text">Information</span>
+		</label>
+		<label for="level_warn" class="menu-item">
+			<input type="checkbox" id="level_warn" name="WARN" class="opt-flag opt-type">
+			<span class="menu-item-text">Warning</span>
+		</label>
+		<label for="level_error" class="menu-item">
+			<input type="checkbox" id="level_error" name="ERROR" class="opt-flag opt-type">
+			<span class="menu-item-text">Error</span>
+		</label>
+
+		<div class="menu-separator"></div>
+
+		<div class="menu-group-label">
+			<span class="menu-item-text">Other Server Options</span>
+		</div>
+
+		<label for="extended_debug" class="menu-item" title="The implementation of this option is dependent on the server-side library being used.">
+			<input type="checkbox" id="extended_debug" name="EXTENDED" class="opt-flag opt-other">
+			<span class="menu-item-text">Extended Request Debug</span>
+		</label>
+
+		<div class="menu-separator"></div>
+
+		<div id="open_ext_options" class="menu-item">
+			<span class="icon icon-options"></span>
+			<span class="menu-item-text"><i>ChromeLogger</i> Options</span>
+		</div>
+
+
+	</body>
+</html>

@@ -10,6 +10,27 @@ const OUTPUT_POSITION = {
 	TRAILING: 2
 }
 
+
+/**
+	Enum flags for X-ChromeLogger-Enable values to send to the server based on user preferences.
+	Low byte is meant for individual log messages, high byte for more general flags, like getting
+	details about the processed request in general (call stack, variables, state, etc).
+	(These are not for filtering on our, client, side... the console UI already has filters for that.)
+*/
+const SERVER_ENABLE_FLAG = {
+	NONE       : 0,
+	TRACE      : 0x0001,  // log()
+	DEBUG      : 0x0002,
+	INFO       : 0x0004,
+	WARN       : 0x0008,
+	ERROR      : 0x0010,
+
+	ALL_LEVELS : 0x001F,  // (TRACE | DEBUG | INFO | WARN | ERROR)
+
+	EXTENDED   : 0x0100,  // request "extended" details from server (eg. a state dump), regardless of individual log messages
+};
+
+
 /**
  * Default options object.
  * @since 1.5
@@ -41,6 +62,8 @@ const DEFAULT_OPTIONS = {
 	backtrace_position: OUTPUT_POSITION.TRAILING,
 	// location of time stamp in relation to rest of message output
 	timestamp_position: OUTPUT_POSITION.LEADING,
+	// X-ChromeLogger-Enable value to use, based on user preference
+	server_en_flags: SERVER_ENABLE_FLAG.ALL_LEVELS,
 };
 
 
