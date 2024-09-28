@@ -4,7 +4,7 @@
  */
 
 /** Enum for backtrace position option. */
-const BACKTRACE_POSITION = {
+const OUTPUT_POSITION = {
 	NONE: 0,
 	LEADING: 1,
 	TRAILING: 2
@@ -29,7 +29,8 @@ const DEFAULT_OPTIONS = {
 		number: 'background-color:dodgerblue;color:white;font-weight:bold;border-radius:0.5em;padding:0em 0.3em;',
 		fileline: 'color:mediumpurple;font-style:italic;border-style:solid;border-width:0px 1px;border-radius:0.5em;padding:0em 0.5em;',
 		classname: 'font-weight:bold;',
-		header: 'display:block;background-color:black;color:white;text-align:center;padding:0.2em;border-radius:0.3em;'
+		header: 'display:block;background-color:black;color:white;text-align:center;padding:0.2em;border-radius:0.3em;',
+		timestamp: 'margin-right:.4em; padding:.01em .5em; border-radius: .3em; background-color:#595959; color:#aadbd9;',
 	},
 	display_data_url: 'log',
 	// add "X-ConsoleLogger-Enabled" and "-Version" request headers?
@@ -37,7 +38,9 @@ const DEFAULT_OPTIONS = {
 	// add  those headers for these types of requests  (https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest/ResourceType)
 	inject_req_headers_for_types: [ "main_frame", "sub_frame", "websocket", "xmlhttprequest" ],
 	// location of backtrace (file + line) in relation to rest of message output
-	backtrace_position: BACKTRACE_POSITION.TRAILING,
+	backtrace_position: OUTPUT_POSITION.TRAILING,
+	// location of time stamp in relation to rest of message output
+	timestamp_position: OUTPUT_POSITION.LEADING,
 };
 
 

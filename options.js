@@ -48,6 +48,7 @@ function populateForm( opts ) {
 	form.inject_req_headers_for_types.value = opts.inject_req_headers_for_types.join(', ');
 	form.inject_req_headers_for_types.disabled = !opts.inject_req_headers;
 	form.backtrace_position.value = opts.backtrace_position.toString();
+	form.timestamp_position.value = opts.timestamp_position.toString();
 
 }
 
@@ -123,8 +124,9 @@ document.addEventListener("DOMContentLoaded", () => {
 				// inject request headers and request types list
 				inject_req_headers: form.inject_req_headers.checked,
 				inject_req_headers_for_types: form.inject_req_headers_for_types.value.split(/\s*,\s*/),
-				// backtrace position value is numeric
+				// backtrace and timestamp position values are numeric
 				backtrace_position: parseInt(form.backtrace_position.value),
+				timestamp_position: parseInt(form.timestamp_position.value),
 
 			})
 			.then(() => showMessage("Options saved!"))

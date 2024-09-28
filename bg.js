@@ -208,7 +208,7 @@ function processChromeLoggerData( data ) {
 			row = row.reduce(function( row, value, index ){
 				row[ data.columns[ index ] ] = value;
 				return row;
-			}, { 'log': [], 'backtrace': false, 'type': 'log' });
+			}, { 'log': [], 'backtrace': false, 'type': 'log', 'timestamp': null });
 
 			var
 
@@ -326,17 +326,18 @@ function processChromeLoggerData( data ) {
 			else {
 				tmpl_args = args;
 				fileline = false;
+				row.timestamp = null;
 			}
 
 			// append fileline ...
-			if ( fileline && OPTIONS.backtrace_position != BACKTRACE_POSITION.NONE ) {
+			if ( fileline && OPTIONS.backtrace_position != OUTPUT_POSITION.NONE ) {
 
 				let fl_pattern = '%c%s%c';
 				const fl_args = [ OPTIONS.console_substitution_styles.fileline, fileline, '' ];
 
 				switch ( OPTIONS.backtrace_position )
 				{
-					case BACKTRACE_POSITION.TRAILING:
+					case OUTPUT_POSITION.TRAILING:
 						// prepend a space if there is other pattern content ...
 						if ( tmpl_pattern )
 							fl_pattern = " " + fl_pattern;
@@ -344,10 +345,31 @@ function processChromeLoggerData( data ) {
 						tmpl_args.push(...fl_args);
 						break;
 
-					case BACKTRACE_POSITION.LEADING:
+					case OUTPUT_POSITION.LEADING:
 						// assume that the style template will handle spacing (margin/padding)
 						tmpl_pattern = fl_pattern.concat(tmpl_pattern);
 						tmpl_args.unshift(...fl_args);
+						break;
+				}
+
+			}
+
+			// prepend/append timestamp
+			if (row.timestamp && OPTIONS.timestamp_position != OUTPUT_POSITION.NONE) {
+
+				const ts_pattern = '%c%s%c';
+				const ts_args = [ OPTIONS.console_substitution_styles.timestamp, row.timestamp, '' ];
+
+				switch ( OPTIONS.timestamp_position )
+				{
+					case OUTPUT_POSITION.TRAILING:
+						tmpl_pattern = tmpl_pattern.concat(ts_pattern);
+						tmpl_args.push(...ts_args);
+						break;
+
+					case OUTPUT_POSITION.LEADING:
+						tmpl_pattern = ts_pattern.concat(tmpl_pattern);
+						tmpl_args.unshift(...ts_args);
 						break;
 				}
 

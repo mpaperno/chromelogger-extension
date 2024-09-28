@@ -38,6 +38,7 @@
 				overflow: clip;
 				text-align: right;
 				align-content: center;
+				text-wrap: nowrap;
 			}
 
 			fieldset.subset {
@@ -71,11 +72,11 @@
 				justify-items: center;
 				column-gap: 2.5em;
 				background-color: color-mix(in srgb, Canvas 90%, transparent);
-				padding: .75em .25em;
+				padding: .75em .25em 1em;
 				position: sticky;
 				left: 0;
 				right: 0;
-				bottom: .5em;
+				bottom: 0;
 			}
 
 			/* the message_area displays short status messages, like "settings saved" */
@@ -132,6 +133,9 @@
 			<div><label for="console_substitution_styles-fileline">/backtrace/file:line</label></div>
 			<input type="text" id="console_substitution_styles-fileline"/>
 
+			<div><label for="console_substitution_styles-fileline">Timestamp</label></div>
+			<input type="text" id="console_substitution_styles-timestamp" title="Timestamp formatting."/>
+
 			<div><label for="console_substitution_styles-classname">Class Name</label></div>
 			<input type="text" id="console_substitution_styles-classname"/>
 
@@ -159,6 +163,14 @@
 				<label for="backtrace_position_1"><input type="radio" name="backtrace_position" id="backtrace_position_1" value="1"/>Leading</label>
 				<label for="backtrace_position_2"><input type="radio" name="backtrace_position" id="backtrace_position_2" value="2"/>Trailing</label>
 				<span class="help" title="This is the file name and line number sent from the server with each log record. Styled by 'backtrace' option (above).">?</span>
+			</fieldset>
+
+			<label>Timestamp Output Position</label>
+			<fieldset class="subset">
+				<label for="timestamp_position_0"><input type="radio" name="timestamp_position" id="timestamp_position_0" value="0"/>Hidden</label>
+				<label for="timestamp_position_1"><input type="radio" name="timestamp_position" id="timestamp_position_1" value="1"/>Leading</label>
+				<label for="timestamp_position_2"><input type="radio" name="timestamp_position" id="timestamp_position_2" value="2"/>Trailing</label>
+				<span class="help" title="This is the time stamp sent from the server with each log record. Styled by 'Timestamp' option (above).">?</span>
 			</fieldset>
 
 			<div class="align-top">
