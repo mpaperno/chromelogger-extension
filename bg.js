@@ -452,6 +452,11 @@ function endDataUrlGroup(tabId) {
  *	- logs details url, method separately as chromelogger data
  * @since 2.0
  *	- removed capturing details.rows from dev.js
+ * @sinde 3.0
+ *	- Refactor to:
+ *		- Handle multiple X-ChromeLogger-Data headers as individual log message structs (compatibility with original Chrome plugin & PHP logger).
+ *		- Handle long multi-part log message structs broken up across multiple X-ChromeLogger-Data-{suffix} headers, grouped by common suffix.
+ *	- Allow for grouping on current data URL (log heading as group/groupCollapsed and add a groupEnd).
  *
  * @param tabs.onHeadersReceived details
  */
@@ -462,6 +467,7 @@ function onDevPortMessage( details ) {
 
 	// details object passed through the open devtools ...
 
+	// Filter the incoming headers.
 	const headers = details.responseHeaders
 		// Just get the headers we're interested in...
 		.filter((h) => PROCESS_REQUEST_HEADERS.find( value => h.name.toLowerCase().startsWith(value)))
@@ -472,25 +478,46 @@ function onDevPortMessage( details ) {
 	if (!headers.length)
 		return;
 
-	// process header data ...
-
 	// display data url ? log it as chromelogger data ...
 	if ( OPTIONS.display_data_url )
 		logDataUrl(details.tabId, details.method, details.url, OPTIONS.console_substitution_styles.header, OPTIONS.display_data_url);
 
-	// In Chrome each header comes individually, even if they have the same names (in Firefox all values are joined together, see note below).
-	// For us, all headers with the same name are part of one B64-encoded message (log entry), so
-	// to join long log messages together we need to collect all values for the headers with same name.
+	// process header data ...
+
+	// Header format is one of:
+	//  * X-ChromeLogger-Data
+	//  * X-ChromeLogger-Data-{suffix}
+	//    where {suffix} is set by server for grouping multi-part messages or ensuring correct output order (eg. "-0001", "-0002", etc).
+	//
+	// For compatibility with the original ChromeLogger extension (for Chrome), each header w/out a suffix in the name is treated as an
+	// individual log message structure.
+	// All headers with the same suffix are part of one B64-encoded message (log entry struct), to allow longer messages than fit in one header.
+	// To join long log messages together we need to collect all values for the headers with same name into a buffer.
+	// Further, the header values are delivered differently in FF vs. Chrome... which is explained more below.
+	//
 	// Use a Map because that preserves key insertion order.
 	const buffer = new Map();
 
 	// collect headers ...
 	headers.forEach(( header ) => {
-		let headerValue = buffer.get(header.name) || "";
-		// In Firefox (maybe others?) the `header.value` for all headers with the same name are joined
-		// together with commas into one string. Split them and re-join w/out the comma...
-		headerValue += header.value.split(',').join('');
-		buffer.set(header.name, headerValue);
+
+		// Look for a "suffix" value in the header name, eg. in 'X-ChromeLogger-Data-0001' the suffix is '0001'.
+		const nameArry = header.name.split('-');
+		const headerSuffix = nameArry.length > 3 ? nameArry[3] : null;
+
+		// In Firefox (maybe others?) the `header.value` for all headers with the same name are joined together with commas into one string,
+		// whereas in Chrome(ium) each header is delivered individually. We can just try a split here, in case there are commas...
+		const values = header.value.split(',');
+		// ... and loop over each header value as if it was an individual header (this "normalizes" the differences between FF and Chrome).
+		for (const value of values) {
+			// The header's "suffix" is used as the buffer storage key;
+			//   If there is a suffix already, join all headers with same suffix into one value (all headers with same suffix constitute one log message);
+			//   If there isn't a suffix, generate a unique one for each header value (so each header is a separate log message);
+			const suffix = headerSuffix ?? (Math.round(Math.random() * 1e12)).toString(16);
+			// Add header value to any current buffer value, then save (back to) buffer.
+			buffer.set( suffix, (buffer.get(suffix) ?? "") + value );
+		}
+
 	});
 
 	// Now process the collected headers
