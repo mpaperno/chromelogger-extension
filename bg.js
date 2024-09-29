@@ -180,6 +180,8 @@ function onTabRemoved( tabId ) {
 		// remove tab ...
 		delete tabs[ tabKey ];
 
+		console.info( `Tab ${tabId} has been disconnected.` );
+
 	}
 
 }
@@ -538,8 +540,8 @@ function onDevPortMessage( details ) {
 function onDevPortDisconnect( port ) {
 
 	// report error ...
-	if ( port.error ) console.error('Disconnected due to error:', port.error.message);
-	else console.error( port.name, 'has been disconnected!' );
+	if ( port.error )
+		console.error(`Port '${port.name}' disconnected due to error:`, port.error);
 
 	// remove tab if any exists ...
 	onTabRemoved( tabIdFromPort(port) );
@@ -714,6 +716,8 @@ browser.runtime.onConnect.addListener(( port ) => {
 	// The function will check for existing listener mapping first.
 	toggleInjectRequestHeaders(tabKey);
 
+	console.info( `Tab ${tabId} has been connected.` );
+
 });
 
 
@@ -735,8 +739,6 @@ browser.runtime.onMessage.addListener(( details )=>{
 
 /**
  * Listener / Assigns onTabRemoved handler for tab removal events.
- * @note Tried to track closing browser.windows events but it doesn't work as of 2017Oct08
- * @todo Whenever a devtools close event becomes available, bind to that instead of this!
  * @since 1.0
  * @param integer tabId
  */
