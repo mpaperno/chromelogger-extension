@@ -116,12 +116,17 @@ class Tab {
 			It does _not_ check the `inject_req_headers` setting -- disconnect the event handler to stop injecting headers instead.
 			@see toggleInjectRequestHeaders()
 		*/
-		this.onBeforeSendHeaders = function(details) {
+		this.onBeforeSendHeaders = function(details)
+		{
 			details.requestHeaders.push(
 				{ name: "X-ChromeLogger-Enable", value: OPTIONS.server_en_flags.toString() },
 				{ name: "X-ChromeLogger-Version", value: version }
 			);
-			// console.log(details.requestHeaders);
+			if (OPTIONS.use_request_password) {
+				details.requestHeaders.push(
+					{ name: "X-ChromeLogger-Auth", value: OPTIONS.request_password },
+				);
+			}
 			return { requestHeaders: details.requestHeaders };
 		}
 

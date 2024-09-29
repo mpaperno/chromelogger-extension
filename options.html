@@ -47,21 +47,38 @@
 				margin: 0;
 				display: flex;
 				flex-flow: row wrap;
-				row-gap: 0.3em;
+				row-gap: 0.4em;
 				column-gap: .75em;
 				align-items: center;
+			}
+
+			input {
+				border-width: 1px;
+				border-style: solid;
 			}
 
 			.align-top { align-self: start; }
 			.flex-grow { flex-grow: 1; }
 
+			.textbutton,
 			.help {
 				border: 1.75px solid currentColor;
 				border-radius: 50%;
 				padding: .1em .5em;
-				font-weight: bold;
 				margin-left: auto;
 				margin-right: .1em;
+				font-family: monospace;
+				font-size: 1.2em;
+				cursor: default;
+			}
+
+			.textbutton:hover {
+				/* background-color: AccentColor; */
+				outline: 1px solid currentColor;
+			}
+
+			.help {
+				font-weight: bold;
 				cursor: help;
 			}
 
@@ -97,8 +114,16 @@
 			#message_area[data-status='warn']  { color: orange; }
 			#message_area[data-status='error'] { color: red; }
 
+			#request_password[data-saved] {
+				border-color: darkcyan;
+			}
+			#request_password[data-changed] {
+				border-color: darkorange;
+			}
+
 		</style>
 		<script type="text/javascript" src="browser-polyfill.min.js"></script>
+		<script type="text/javascript" src="/lib/forge/forge-sha256.min.js"></script>
 		<script type="text/javascript" src="global.js"></script>
 		<script type="text/javascript" src="options.js"></script>
 	</head>
@@ -176,13 +201,28 @@
 			<div class="align-top">
 				<input type="checkbox" id="inject_req_headers"/>
 			</div>
-			<fieldset class="subset">
+			<fieldset class="subset" id="fs_header_options">
+
 				<label for="inject_req_headers" style="max-width: 90%;">Add '<i>X-ChromeLogger-Enabled</i>' and '<i>X-ChromeLogger-Version</i>' headers to requests when ChromeLogger is active on a browser tab.</label>
 				<span class="help" title="These headers can be used by a server-side implementation to determine if ChromeLogger is enabled on a tab, and the available protocol version.">?</span>
+
+				<input type="checkbox" id="use_request_password"/><label for="use_request_password" > Send request password:</label>
+				<input id="request_password" type="text" class="flex-grow" title="Enter the password to send. Any saved password is overwritten if you enter a new one." />
+				<span id="btn_clear_password" class="textbutton" title="Clear the saved password when saving these options." hidden>X</span>
+				<input type="hidden" name="do_clear_password" value="">
+				<span class="help" title=
+"If the server-side library supports password protection,
+  select this option and specify a password.
+This will add an 'X-ChromeLogger-Auth' header to each request.
+Header injection must be enabled to use this option.
+The password is stored and sent hashed using SHA-256."
+				>?</span>
+
 				<label for="inject_req_headers_for_types">
-					Only for these <a href="https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest/ResourceType">request types</a> (separate values with commas):
+					Inject headers only for these <a href="https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest/ResourceType">resource types</a> (separate values with commas):
 				</label>
 				<input id="inject_req_headers_for_types" type="text" class="flex-grow" />
+
 			</fieldset>
 
 		</fieldset>

@@ -45,17 +45,32 @@ function populateForm( opts ) {
 	// misc. settings ...
 	form.display_data_url.value = opts.display_data_url;
 	form.inject_req_headers.checked = opts.inject_req_headers;
+	form.use_request_password.checked = opts.use_request_password;
 	form.inject_req_headers_for_types.value = opts.inject_req_headers_for_types.join(', ');
-	form.inject_req_headers_for_types.disabled = !opts.inject_req_headers;
+	form.fs_header_options.disabled = !opts.inject_req_headers;
 	form.backtrace_position.value = opts.backtrace_position.toString();
 	form.timestamp_position.value = opts.timestamp_position.toString();
 
+	setPasswordFieldState(!!opts.request_password);
 }
 
 function populateFormFromStorage() {
 	browser.storage.sync.get(DEFAULT_OPTIONS)
 	.then(populateForm)
 	.catch(error=>{ console.error(error); });
+}
+
+/** Handles formatting the password field on initial load and after saving form. */
+function setPasswordFieldState(hasPw) {
+	form.request_password.value = "";    // clear the password value, we never actually show it
+	form.do_clear_password.value = "";   // remove the "clear" flag in case it's set
+	// set an appropriate placeholder text
+	form.request_password.placeholder = hasPw ? "A password is currently saved." : "No password is set.";
+	// set attributes for visual formatting
+	form.request_password.toggleAttribute('data-saved', hasPw);    // has a saved password?
+	form.request_password.toggleAttribute('data-changed', false);  // clear the 'changed' indicator
+	// toggle the "clear saved password" button accordingly
+	document.querySelector("#btn_clear_password").toggleAttribute('hidden', !hasPw);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -77,7 +92,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
 	// set change handler on "inject headers" option to en/disable the "request types" option accordingly
 	form.inject_req_headers.addEventListener("change", () => {
-		form.inject_req_headers_for_types.disabled = !form.inject_req_headers.checked;
+		form.fs_header_options.disabled = !form.inject_req_headers.checked;
+	});
+
+	// password field input handler to highlight when a saved password will be changed
+	form.request_password.addEventListener("input", (e) => {
+		e.target.toggleAttribute('data-changed', e.target.hasAttribute('data-saved') && !!e.target.value);
+	})
+
+	// password field "clear" button handler
+	document.querySelector("#btn_clear_password").addEventListener("click", (e) => {
+		form.request_password.placeholder = "Cleared when options are saved..."
+		form.do_clear_password.value = "1";
+		form.request_password.toggleAttribute('data-changed', true);
+		e.target.toggleAttribute('hidden', true);
 	});
 
 	// onsubmit ...
@@ -106,30 +134,39 @@ document.addEventListener("DOMContentLoaded", () => {
 		// save ...
 		if ( event.submitter.id == 'save' ) {
 
-			// styles collection ...
-			let console_substitution_styles = {};
-
-			// update collection ...
-			console_substitution_style_inputs.forEach(input=>{
-				console_substitution_styles[ input.id.substr( input.id.indexOf('-') + 1 ) ] = input.value.trim();
-			});
-
-			// save settings ...
-			browser.storage.sync.set({
-
-				// styles ...
-				console_substitution_styles: console_substitution_styles,
+			// options object to save
+			const opts = {
+				// styles (populated below) ...
+				console_substitution_styles: {},
 				// display url log type (''|log|group|groupCollapsed) ...
 				display_data_url: form.display_data_url.value,
-				// inject request headers and request types list
+				// inject request headers, password, and for which request types
 				inject_req_headers: form.inject_req_headers.checked,
+				use_request_password: form.use_request_password.checked,
 				inject_req_headers_for_types: form.inject_req_headers_for_types.value.split(/\s*,\s*/),
 				// backtrace and timestamp position values are numeric
 				backtrace_position: parseInt(form.backtrace_position.value),
 				timestamp_position: parseInt(form.timestamp_position.value),
+			};
 
+			// update styles collection ...
+			console_substitution_style_inputs.forEach(input => {
+				opts.console_substitution_styles[ input.id.substring( input.id.indexOf('-') + 1 ) ] = input.value.trim();
+			});
+
+			// add the password value only if it is changing or being cleared; password is stored hashed
+			if (!!form.request_password.value)
+				opts.request_password = forge_sha256(form.request_password.value);
+			else if (!!form.do_clear_password.value)
+				opts.request_password = "";
+
+			// save settings ...
+			browser.storage.sync.set(opts)
+			.then(() => {
+				showMessage("Options saved!");
+				if (opts.request_password != undefined)
+					setPasswordFieldState(!!form.request_password.value);
 			})
-			.then(() => showMessage("Options saved!"))
 			.catch(error => {
 				console.error(error);
 				showMessage("Error: " + error.message, "error");
@@ -140,5 +177,4 @@ document.addEventListener("DOMContentLoaded", () => {
 	});
 
 
-});
-
+}, { once: true });

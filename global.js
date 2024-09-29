@@ -64,6 +64,9 @@ const DEFAULT_OPTIONS = {
 	timestamp_position: OUTPUT_POSITION.LEADING,
 	// X-ChromeLogger-Enable value to use, based on user preference
 	server_en_flags: SERVER_ENABLE_FLAG.ALL_LEVELS,
+	// X-ChromeLogger-Auth header
+	use_request_password: false,
+	request_password: "",
 };
 
 
