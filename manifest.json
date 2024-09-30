@@ -7,7 +7,7 @@
 	"author": "Tarraccas Obremski",
 
 	"background": {
-		"scripts": [ "browser-polyfill.min.js", "global.js", "bg.js" ]
+		"scripts": [ "/lib/browser-polyfill/browser-polyfill.min.js", "global.js", "bg.js" ]
 	},
 
 	"permissions": [

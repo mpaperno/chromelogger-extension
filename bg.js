@@ -777,7 +777,7 @@ browser.webNavigation.onDOMContentLoaded.addListener(( details )=>{
 	) {
 
 		// inject shim for Chrome compatibility (ignore errors for now)
-		browser.tabs.executeScript( details.tabId, { file: '/browser-polyfill.min.js' });
+		browser.tabs.executeScript( details.tabId, { file: '/lib/browser-polyfill/browser-polyfill.min.js' });
 		// inject log.js to receive messages sent to tab ? ...
 		browser.tabs.executeScript( details.tabId, { file: '/log.js' })
 		.then(()=>{
